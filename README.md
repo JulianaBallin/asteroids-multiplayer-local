@@ -5,7 +5,7 @@
 <p align="center">
   Versão multiplayer local do clássico Asteroids para até <strong>4 jogadores simultâneos</strong>,<br>
   com controles Tectoy, HUD por jogador e mecânica inédita de resgate entre aliados.<br>
-  <em>Atividade 007 — UEA · Ciência da Computação</em>
+  <em>Atividade 007 — UEA · Tópicos Especiais para Computação I</em>
 </p>
 
 ---
@@ -179,4 +179,4 @@ Para renderizá-los:
 
 ---
 
-<h3 align="center">UEA · Ciência da Computação · Atividade 007 — Multiplayer Local</h3>
+<h3 align="center">UEA · Tópicos Especiais para Computação I · Atividade 007 — Multiplayer Local</h3>
