@@ -1,0 +1,20 @@
+@startuml C4_Nivel2_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title [Nível 2] Diagrama de Container — Asteroids Multiplayer Local
+
+Person(jogadores, "1 a 4 Jogadores", "Interagem simultaneamente via teclado")
+
+System_Boundary(sistema, "Asteroids Multiplayer Local") {
+
+    Container(app, "Aplicação Python/Pygame", "Python 3.11 + pygame 2.x",
+        "Executa o loop principal do jogo,\ngerencia cenas, renderiza gráficos\ne processa entradas de teclado.")
+
+    ContainerDb(config, "Módulo de Configuração", "config.py",
+        "Centraliza todas as constantes do jogo:\nresoluções, cores, velocidades,\nmapeamento de controles Tectoy.")
+}
+
+Rel(jogadores, app, "Envia comandos via teclado (pygame events)")
+Rel(app, config, "Lê constantes de jogo em tempo de execução")
+
+@enduml
