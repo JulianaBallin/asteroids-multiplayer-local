@@ -1,0 +1,18 @@
+@startuml C4_Nivel1_Contexto
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title [Nível 1] Diagrama de Contexto — Asteroids Multiplayer Local
+
+Person(jogador1, "Jogador 1", "Controla nave ciano com WASD")
+Person(jogador2, "Jogador 2", "Controla nave amarela com setas")
+Person(jogador3, "Jogador 3", "Controla nave verde com IJKL")
+Person(jogador4, "Jogador 4", "Controla nave vermelha com teclado numérico")
+
+System(jogo, "Asteroids Multiplayer Local", "Jogo de arcade local para 2 a 4 jogadores.\nCada jogador controla uma nave e coopera\n(ou compete) para destruir asteroides e sobreviver.")
+
+Rel(jogador1, jogo, "Joga via teclado (controle Tectoy J1)")
+Rel(jogador2, jogo, "Joga via teclado (controle Tectoy J2)")
+Rel(jogador3, jogo, "Joga via teclado (controle Tectoy J3)")
+Rel(jogador4, jogo, "Joga via teclado (controle Tectoy J4)")
+
+@enduml

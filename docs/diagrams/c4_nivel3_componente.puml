@@ -1,0 +1,37 @@
+@startuml C4_Nivel3_Componente
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title [Nível 3] Diagrama de Componentes — Aplicação Python/Pygame
+
+Person(jogadores, "1 a 4 Jogadores")
+
+Container_Boundary(app, "Aplicação Python/Pygame") {
+
+    Component(main, "main.py", "Ponto de Entrada",
+        "Instancia Jogo e inicia o loop principal.")
+
+    Component(game, "game.py — Jogo", "Controlador de Cenas",
+        "Gerencia o ciclo de cenas (menu, jogando, placar).\nLê eventos de teclado.\nRenderiza HUD e telas de menu/placar.")
+
+    Component(systems, "systems.py — Mundo", "Lógica do Jogo",
+        "Coordena o estado do mundo:\ncria ondas, resolve colisões,\natualiza mecânica de resgate entre aliados.")
+
+    Component(sprites, "sprites.py — Entidades", "Objetos do Jogo",
+        "Define Nave, Bala, BalaOVNI, Asteroide,\nOVNI e Carcaca (destroço resgatável).\nCada entidade tem update() e draw().")
+
+    Component(utils, "utils.py — Utilitários", "Funções Auxiliares",
+        "Vetor 2D, envolvimento de tela,\nfunções de desenho e geração aleatória.")
+
+    Component(config, "config.py — Configuração", "Constantes",
+        "Teclas Tectoy por jogador, cores,\nvelocidades, dimensões e parâmetros\nda mecânica de resgate.")
+}
+
+Rel(jogadores, game, "Envia entradas de teclado")
+Rel(main, game, "Instancia e inicia")
+Rel(game, systems, "Chama update() e draw() a cada frame")
+Rel(systems, sprites, "Cria, atualiza e destrói entidades")
+Rel(systems, config, "Lê constantes de jogo")
+Rel(sprites, utils, "Usa Vec, envolver(), ang_vec()")
+Rel(game, config, "Lê controles e cores dos jogadores")
+
+@enduml

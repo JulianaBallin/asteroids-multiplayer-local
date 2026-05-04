@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="120" viewBox="0 0 420 120">
+  <rect width="420" height="120" fill="#000"/>
+
+  <!-- Asteroide decorativo -->
+  <polygon points="30,60 45,45 65,42 78,55 72,72 55,80 38,74"
+           fill="none" stroke="#808080" stroke-width="2"/>
+
+  <!-- Nave J1 (ciano) -->
+  <polygon points="110,30 100,55 120,55" fill="none" stroke="#00C8FF" stroke-width="2"/>
+  <!-- Nave J2 (amarelo) -->
+  <polygon points="115,38 105,63 125,63" fill="none" stroke="#FFDC00" stroke-width="2"/>
+
+  <!-- Título -->
+  <text x="140" y="52" font-family="Consolas,monospace" font-size="32"
+        font-weight="bold" fill="#F0F0F0">ASTEROIDS</text>
+  <text x="140" y="78" font-family="Consolas,monospace" font-size="16"
+        fill="#A0A0A0">MULTIPLAYER LOCAL</text>
+
+  <!-- Linha separadora colorida por jogador -->
+  <line x1="140" y1="88" x2="195" y2="88" stroke="#00C8FF" stroke-width="2"/>
+  <line x1="197" y1="88" x2="252" y2="88" stroke="#FFDC00" stroke-width="2"/>
+  <line x1="254" y1="88" x2="309" y2="88" stroke="#00FF64" stroke-width="2"/>
+  <line x1="311" y1="88" x2="366" y2="88" stroke="#FF5050" stroke-width="2"/>
+
+  <!-- UEA -->
+  <text x="140" y="108" font-family="Consolas,monospace" font-size="12"
+        fill="#505050">UEA · Ciência da Computação</text>
+</svg>
