@@ -86,7 +86,7 @@ Cada integrante da equipe implementou uma mecânica inédita no jogo.
 
 <br>
 
-**Juliana Ballin Lima — Sistema de Resgate**
+**Juliana Ballin Lima - Sistema de Resgate**
 
 Quando um jogador perde todas as suas vidas nos modos Cooperativo ou Equipes, sua nave se transforma em uma **carcaça piscante** que permanece no mapa por 10 segundos. Qualquer aliado que aproxime sua nave da carcaça e permaneça a menos de 80 pixels por 3 segundos consecutivos completa o resgate: o jogador eliminado retorna com 1 vida na posição da carcaça, e o resgatador recebe 500 pontos de bônus. Uma barra de progresso verde indica o andamento do resgate. Se ninguém resgatar a tempo, a carcaça desaparece permanentemente.
 
