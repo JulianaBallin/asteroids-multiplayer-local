@@ -1,7 +1,7 @@
 import pygame as pg
 
 # Tela
-LARGURA = 960
+LARGURA = 1280
 ALTURA = 720
 FPS = 60
 
@@ -18,10 +18,10 @@ CORES_JOGADORES = [
 
 # Posições de spawn iniciais por jogador
 POSICOES_SPAWN = [
-    (240, 384),
-    (720, 384),
-    (480, 220),
-    (480, 580),
+    (320, 384),   # J1: esquerda (25% da largura)
+    (960, 384),   # J2: direita  (75% da largura)
+    (640, 230),   # J3: topo     (centro, acima)
+    (640, 560),   # J4: baixo    (centro, abaixo)
 ]
 
 # Controles Tectoy por jogador
