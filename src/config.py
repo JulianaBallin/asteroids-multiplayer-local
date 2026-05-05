@@ -80,6 +80,14 @@ PRETO = (0, 0, 0)
 
 DURACAO_FADE = 1.5
 
+# Modos de jogo disponíveis
+class Modo:
+    SOLO            = "solo"
+    COOPERATIVO     = "cooperativo"
+    DUELO           = "duelo"
+    TODOS_CONTRA_TODOS = "ffa"
+    EQUIPES         = "equipes"
+
 # Mecânica de resgate — jogador morto pode ser revivido por aliado próximo
 ALCANCE_RESGATE = 80      # distância máxima em pixels para iniciar o resgate
 DURACAO_RESGATE = 3.0     # segundos necessários para completar o resgate
