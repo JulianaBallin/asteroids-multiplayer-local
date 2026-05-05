@@ -138,6 +138,8 @@ class Mundo:
     def _resolver_colisoes(self):
         # Balas dos jogadores vs asteroides
         for i, grupo in enumerate(self.balas):
+            if not self.naves[i].ativa:
+                continue  # ignora balas de jogadores eliminados
             nave = self.naves[i]
             for ast in list(self.asteroides):
                 for bala in list(grupo):
@@ -148,6 +150,8 @@ class Mundo:
 
         # Balas dos jogadores vs OVNI
         for i, grupo in enumerate(self.balas):
+            if not self.naves[i].ativa:
+                continue  # ignora balas de jogadores eliminados
             nave = self.naves[i]
             for ovni in list(self.ovnis):
                 for bala in list(grupo):
@@ -160,6 +164,8 @@ class Mundo:
 
         # Fogo amigo — balas de um jogador vs naves inimigas (modos competitivos)
         for i, grupo in enumerate(self.balas):
+            if not self.naves[i].ativa:
+                continue  # ignora balas de jogadores eliminados
             for nave_alvo in list(self.naves_vivas()):
                 if nave_alvo.jogador_id == i:
                     continue
@@ -230,6 +236,12 @@ class Mundo:
     # --- mecânica de resgate ---
 
     def _atualizar_resgates(self, dt: float):
+        # Remove entradas órfãs de carcaças que expiraram por TTL
+        ids_ativos = {id(c) for c in self.carcacas}
+        for cid in list(self.tempos_resgate):
+            if cid not in ids_ativos:
+                del self.tempos_resgate[cid]
+
         for carcaca in list(self.carcacas):
             cid = id(carcaca)
             if cid not in self.tempos_resgate:
