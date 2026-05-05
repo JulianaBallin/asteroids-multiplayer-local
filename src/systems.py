@@ -1,15 +1,18 @@
 from random import uniform
 import pygame as pg
 import config as C
+from config import Modo
 from sprites import Asteroide, BalaOVNI, Carcaca, Nave, OVNI
 from utils import Vec, borda_aleatoria, vec_aleatorio
 
 
 class Mundo:
-    def __init__(self, num_jogadores: int):
+    def __init__(self, num_jogadores: int, modo: str):
         self.num_jogadores = num_jogadores
+        self.modo = modo
+        self.msg_vitoria = ""  # preenchida quando fim_de_jogo for True
 
-        # Cria as naves dos jogadores nas posições de spawn
+        # Cria as naves nas posições de spawn
         self.naves: list[Nave] = []
         for i in range(num_jogadores):
             self.naves.append(Nave(Vec(*C.POSICOES_SPAWN[i]), i))
@@ -21,7 +24,7 @@ class Mundo:
         self.ovnis = pg.sprite.Group()
         self.carcacas = pg.sprite.Group()
 
-        # Dicionário que rastreia o tempo que cada nave fica próxima de cada carcaça
+        # Rastreia quanto tempo cada nave fica próxima de cada carcaça
         # estrutura: {id(carcaca): {jogador_id: segundos_acumulados}}
         self.tempos_resgate: dict[int, dict[int, float]] = {}
 
@@ -34,6 +37,16 @@ class Mundo:
 
     def naves_vivas(self) -> list[Nave]:
         return [n for n in self.naves if n.ativa]
+
+    def _sao_aliados(self, id_a: int, id_b: int) -> bool:
+        # Solo e cooperativo: todos são aliados entre si
+        if self.modo in (Modo.SOLO, Modo.COOPERATIVO):
+            return True
+        # Equipes: J1+J2 formam equipe 0, J3+J4 formam equipe 1
+        if self.modo == Modo.EQUIPES:
+            return (id_a // 2) == (id_b // 2)
+        # Duelo e todos-contra-todos: ninguém é aliado
+        return False
 
     # --- criação de entidades ---
 
@@ -52,7 +65,6 @@ class Mundo:
 
     def iniciar_onda(self):
         self.onda += 1
-        # Quantidade de asteroides cresce com a onda
         for _ in range(3 + self.onda):
             pos = borda_aleatoria()
             vel = vec_aleatorio() * uniform(C.VEL_AST_MIN, C.VEL_AST_MAX)
@@ -77,17 +89,15 @@ class Mundo:
     # --- loop principal ---
 
     def update(self, dt: float, teclas):
-        vivas = self.naves_vivas()
-        if not vivas:
-            self.fim_de_jogo = True
+        if self.fim_de_jogo:
             return
 
-        # Atualiza naves e balas
+        vivas = self.naves_vivas()
+
         for nave in vivas:
             nave.controlar(teclas, dt)
             nave.update(dt)
-
-            # Tiro contínuo enquanto a tecla de fogo estiver pressionada
+            # Tiro contínuo enquanto a tecla estiver pressionada
             if teclas[C.CONTROLES[nave.jogador_id]['fogo']]:
                 self.tentar_atirar(nave.jogador_id)
 
@@ -100,14 +110,14 @@ class Mundo:
 
         # OVNI mira na nave viva mais próxima
         for ovni in self.ovnis:
-            if not vivas:
+            vivas_agora = self.naves_vivas()
+            if not vivas_agora:
                 break
-            alvo = min(vivas, key=lambda n: (n.pos - ovni.pos).length())
+            alvo = min(vivas_agora, key=lambda n: (n.pos - ovni.pos).length())
             b = ovni.atirar_em(alvo.pos)
             if b:
                 self.balas_ovni.add(b)
 
-        # Temporizador de spawn do OVNI
         self.timer_ovni -= dt
         if self.timer_ovni <= 0 and not self.ovnis:
             self._criar_ovni()
@@ -115,8 +125,8 @@ class Mundo:
 
         self._resolver_colisoes()
         self._atualizar_resgates(dt)
+        self._verificar_condicao_vitoria()
 
-        # Nova onda quando todos os asteroides forem destruídos
         if not self.asteroides:
             self.cool_onda -= dt
             if self.cool_onda <= 0:
@@ -146,6 +156,22 @@ class Mundo:
                         nave.pontos += pts
                         ovni.kill()
                         bala.kill()
+                        break
+
+        # Fogo amigo — balas de um jogador vs naves inimigas (modos competitivos)
+        for i, grupo in enumerate(self.balas):
+            for nave_alvo in list(self.naves_vivas()):
+                if nave_alvo.jogador_id == i:
+                    continue
+                if self._sao_aliados(i, nave_alvo.jogador_id):
+                    continue  # aliados não se machucam
+                if nave_alvo.invuln > 0:
+                    continue
+                for bala in list(grupo):
+                    if (nave_alvo.pos - bala.pos).length() < nave_alvo.r + bala.r:
+                        bala.kill()
+                        self.naves[i].pontos += 1000  # bônus por acertar inimigo
+                        self._nave_morreu(nave_alvo)
                         break
 
         # Balas do OVNI vs naves
@@ -188,11 +214,12 @@ class Mundo:
     def _nave_morreu(self, nave: Nave):
         nave.vidas -= 1
         if nave.vidas <= 0:
-            # Eliminado — cria carcaça para possível resgate
             nave.ativa = False
-            c = Carcaca(Vec(nave.pos), nave.angulo, nave.jogador_id)
-            self.carcacas.add(c)
-            self.tempos_resgate[id(c)] = {}
+            # Carcaça só aparece nos modos com resgate
+            if self.modo in (Modo.COOPERATIVO, Modo.EQUIPES):
+                c = Carcaca(Vec(nave.pos), nave.angulo, nave.jogador_id)
+                self.carcacas.add(c)
+                self.tempos_resgate[id(c)] = {}
         else:
             # Respawn na posição inicial com invulnerabilidade
             nave.pos = Vec(*C.POSICOES_SPAWN[nave.jogador_id])
@@ -209,31 +236,30 @@ class Mundo:
                 self.tempos_resgate[cid] = {}
 
             for nave in self.naves_vivas():
-                # Jogador não pode se auto-resgatar
                 if nave.jogador_id == carcaca.jogador_id:
+                    continue
+                # Inimigos não podem resgatar
+                if not self._sao_aliados(nave.jogador_id, carcaca.jogador_id):
                     continue
 
                 dist = (nave.pos - carcaca.pos).length()
                 if dist <= C.ALCANCE_RESGATE:
-                    # Acumula tempo de proximidade
                     atual = self.tempos_resgate[cid].get(nave.jogador_id, 0.0)
                     self.tempos_resgate[cid][nave.jogador_id] = atual + dt
                 else:
                     # Reseta se saiu do alcance
                     self.tempos_resgate[cid][nave.jogador_id] = 0.0
 
-                # Resgate completo
                 if self.tempos_resgate[cid].get(nave.jogador_id, 0.0) >= C.DURACAO_RESGATE:
                     self._executar_resgate(carcaca, nave)
                     break
 
-            # Atualiza barra visual de progresso da carcaça
+            # Atualiza barra visual de progresso
             if cid in self.tempos_resgate and self.tempos_resgate[cid]:
                 maximo = max(self.tempos_resgate[cid].values())
                 carcaca.progresso = min(1.0, maximo / C.DURACAO_RESGATE)
 
     def _executar_resgate(self, carcaca: Carcaca, resgatador: Nave):
-        # Revive o jogador com 1 vida na posição da carcaça
         nave_resgatada = self.naves[carcaca.jogador_id]
         nave_resgatada.vidas = 1
         nave_resgatada.ativa = True
@@ -241,37 +267,60 @@ class Mundo:
         nave_resgatada.vel = Vec(0, 0)
         nave_resgatada.angulo = -90.0
         nave_resgatada.invuln = C.TEMPO_SEGURO
-
-        # Regatador ganha bônus de pontos pelo salvamento
         resgatador.pontos += 500
-
-        cid = id(carcaca)
-        self.tempos_resgate.pop(cid, None)
+        self.tempos_resgate.pop(id(carcaca), None)
         carcaca.kill()
+
+    # --- condição de vitória por modo ---
+
+    def _verificar_condicao_vitoria(self):
+        if self.fim_de_jogo:
+            return
+        vivas = self.naves_vivas()
+
+        if self.modo in (Modo.SOLO, Modo.COOPERATIVO):
+            # Fim quando não há mais nenhuma nave viva
+            if not vivas:
+                self.msg_vitoria = ""
+                self.fim_de_jogo = True
+
+        elif self.modo in (Modo.DUELO, Modo.TODOS_CONTRA_TODOS):
+            # Fim quando restar no máximo 1 jogador
+            if len(vivas) <= 1:
+                if len(vivas) == 1:
+                    self.msg_vitoria = f"JOGADOR {vivas[0].jogador_id + 1} VENCEU!"
+                else:
+                    self.msg_vitoria = "EMPATE!"
+                self.fim_de_jogo = True
+
+        elif self.modo == Modo.EQUIPES:
+            # Fim quando restar no máximo 1 equipe viva
+            equipes_ativas = {(n.jogador_id // 2) for n in vivas}
+            if len(equipes_ativas) <= 1:
+                if len(equipes_ativas) == 1:
+                    letra = "A" if list(equipes_ativas)[0] == 0 else "B"
+                    self.msg_vitoria = f"EQUIPE {letra} VENCEU!"
+                else:
+                    self.msg_vitoria = "EMPATE!"
+                self.fim_de_jogo = True
 
     # --- desenho ---
 
     def draw(self, surf: pg.Surface, font_pequena: pg.font.Font):
         for ast in self.asteroides:
             ast.draw(surf)
-
         for ovni in self.ovnis:
             ovni.draw(surf)
-
         for bala in self.balas_ovni:
             bala.draw(surf)
-
         for i, grupo in enumerate(self.balas):
             cor = C.CORES_JOGADORES[i]
             for bala in grupo:
                 bala.draw(surf, cor)
-
         for carcaca in self.carcacas:
             carcaca.draw(surf)
-
         for nave in self.naves:
             nave.draw(surf)
             if nave.ativa:
-                # Rótulo do jogador acima da nave
                 label = font_pequena.render(f"J{nave.jogador_id + 1}", True, nave.cor)
                 surf.blit(label, (int(nave.pos.x) - 8, int(nave.pos.y) - nave.r - 16))
