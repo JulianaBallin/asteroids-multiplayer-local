@@ -109,6 +109,29 @@ class Mundo:
                 ast.vel += delta.normalize() * C.EMP_AST_IMPULSO
                 pulso.ast_na_frente.add(aid)
 
+    def _emp_contra_naves(self):
+        for pulso in list(self.pulsos_emp):
+            lim = pulso.r + C.EMP_HIT_BAND
+            for nave in self.naves:
+                if not nave.ativa:
+                    continue
+                jid = nave.jogador_id
+                if jid == pulso.dono_id:
+                    continue
+                if jid in pulso.naves_na_frente:
+                    continue
+                delta = nave.pos - pulso.pos
+                dist = delta.length()
+                if dist < 1.5:
+                    continue
+                if not (pulso.r_ant < dist <= lim):
+                    continue
+                pulso.naves_na_frente.add(jid)
+                if self._sao_aliados(pulso.dono_id, jid):
+                    nave.invuln = max(nave.invuln, C.EMP_INVULN_ALIADO)
+                else:
+                    nave.emp_jam = max(nave.emp_jam, C.EMP_JAM_SEG)
+
     # --- loop principal ---
 
     def update(self, dt: float, teclas):
@@ -134,6 +157,7 @@ class Mundo:
                 pulso.ancorar(dono.pos)
         self.pulsos_emp.update(dt)
         self._emp_contra_ast()
+        self._emp_contra_naves()
 
         for grupo in self.balas:
             grupo.update(dt)

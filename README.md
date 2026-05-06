@@ -113,7 +113,7 @@ Quando um jogador perde todas as suas vidas nos modos Cooperativo ou Equipes, su
 | **J3** | `J` | `L` | `I` | `H` | `Y` |
 | **J4** | `Num4` | `Num6` | `Num8` | `Num0` | `NumEnter` |
 
-> **Pulsar EMP:** anel que expande a partir da nave (mesmas teclas de antes); depois de usar tem um tempo de espera antes de repetir.
+> **Pulsar EMP:** mesmas teclas de antes, espera antes de repetir; empurra asteroides. Outra nave no alcance da onda: mesmo time/coop ganha invulnerabilidade curta; duel, todos-vs-todos ou equipa adversária ficam com rotação mais lenta uns segundos. Quem dispara não leva esse “lerdo”.
 
 ---
 

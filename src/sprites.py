@@ -58,6 +58,7 @@ class PulsoEMP(pg.sprite.Sprite):
         self.r = 0.0
         self.r_ant = 0.0
         self.ast_na_frente: set[int] = set()
+        self.naves_na_frente: set[int] = set()
         self.rect = pg.Rect(0, 0, int(C.EMP_RAIO_MAX * 2) + 8, int(C.EMP_RAIO_MAX * 2) + 8)
 
     def ancorar(self, pos: Vec):
@@ -152,6 +153,7 @@ class Nave(pg.sprite.Sprite):
         self.angulo = -90.0
         self.cooldown_tiro = 0.0
         self.invuln = 0.0
+        self.emp_jam = 0.0
         self.vidas = C.VIDAS_INICIAIS
         self.pontos = 0
         self.jogador_id = jogador_id
@@ -162,10 +164,11 @@ class Nave(pg.sprite.Sprite):
 
     def controlar(self, teclas, dt: float):
         ctrl = C.CONTROLES[self.jogador_id]
+        rot = C.VEL_ROTACAO * (C.EMP_JAM_ROT_FATOR if self.emp_jam > 0 else 1.0)
         if teclas[ctrl['esq']]:
-            self.angulo -= C.VEL_ROTACAO * dt
+            self.angulo -= rot * dt
         if teclas[ctrl['dir']]:
-            self.angulo += C.VEL_ROTACAO * dt
+            self.angulo += rot * dt
         if teclas[ctrl['cima']]:
             self.vel += ang_vec(self.angulo) * C.EMPUXO * dt
         self.vel *= C.FRICCAO
@@ -184,6 +187,8 @@ class Nave(pg.sprite.Sprite):
             self.cooldown_tiro -= dt
         if self.invuln > 0:
             self.invuln -= dt
+        if self.emp_jam > 0:
+            self.emp_jam = max(0.0, self.emp_jam - dt)
         self.pos += self.vel * dt
         self.pos = envolver(self.pos)
         self.rect.center = (int(self.pos.x), int(self.pos.y))
