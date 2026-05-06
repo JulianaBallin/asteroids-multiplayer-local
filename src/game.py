@@ -104,10 +104,9 @@ class Jogo:
         elif self.cena == "jogando":
             if e.key == pg.K_ESCAPE:
                 self.cena = "menu"
-            # Hiperspace é ação pontual (evento de tecla, não tecla mantida)
             for i in range(self.num_jogadores):
                 if e.key == C.CONTROLES[i]['hiper']:
-                    self.mundo.hiperspace(i)
+                    self.mundo.tentar_emp(i)
 
         elif self.cena == "placar":
             if e.key == pg.K_ESCAPE:
@@ -165,10 +164,10 @@ class Jogo:
         txt(self.tela, self.font_pequena, "CONTROLES", cx - 33, 348, C.CINZA_CLARO)
 
         linhas_ctrl = [
-            ("J1: W/A/D   | Fogo: LSHIFT  | Hiper: Q",        C.CORES_JOGADORES[0]),
-            ("J2: Setas   | Fogo: RSHIFT  | Hiper: P",        C.CORES_JOGADORES[1]),
-            ("J3: I/J/L   | Fogo: H       | Hiper: Y",        C.CORES_JOGADORES[2]),
-            ("J4: Num8/4/6 | Fogo: Num0   | Hiper: NumEnter", C.CORES_JOGADORES[3]),
+            ("J1: W/A/D   | Fogo: LSHIFT  | EMP: Q",        C.CORES_JOGADORES[0]),
+            ("J2: Setas   | Fogo: RSHIFT  | EMP: P",        C.CORES_JOGADORES[1]),
+            ("J3: I/J/L   | Fogo: H       | EMP: Y",        C.CORES_JOGADORES[2]),
+            ("J4: Num8/4/6 | Fogo: Num0   | EMP: NumEnter", C.CORES_JOGADORES[3]),
         ]
         for i in range(min(self.num_jogadores, 4)):
             linha, cor = linhas_ctrl[i]

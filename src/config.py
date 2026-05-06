@@ -25,7 +25,7 @@ POSICOES_SPAWN = [
 ]
 
 # Controles Tectoy por jogador
-# Ordem: esquerda, direita, cima, fogo, hiperspace
+# Ordem: esquerda, direita, cima, fogo, hiper (Pulsar EMP)
 CONTROLES = [
     # J1: WASD
     {'esq': pg.K_a, 'dir': pg.K_d, 'cima': pg.K_w, 'fogo': pg.K_LSHIFT, 'hiper': pg.K_q},
@@ -47,7 +47,6 @@ EMPUXO = 220.0
 FRICCAO = 0.995
 TAXA_TIRO = 0.2
 VEL_BALA = 420.0
-CUSTO_HIPER = 250
 MAX_BALAS_POR_JOGADOR = 4
 
 # Pulsar EMP (mesma tecla que o antigo HIPER)

@@ -174,12 +174,6 @@ class Nave(pg.sprite.Sprite):
         self.cooldown_tiro = C.TAXA_TIRO
         return Bala(self.pos + d * (self.r + 6), self.vel + d * C.VEL_BALA, self.jogador_id)
 
-    def hiperspace(self):
-        self.pos = Vec(uniform(0, C.LARGURA), uniform(0, C.ALTURA))
-        self.vel.xy = (0, 0)
-        self.invuln = 1.0
-        self.pontos = max(0, self.pontos - C.CUSTO_HIPER)
-
     def update(self, dt: float):
         if not self.ativa:
             return
