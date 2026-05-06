@@ -50,6 +50,32 @@ class BalaOVNI(pg.sprite.Sprite):
         circulo(surf, self.pos, self.r, (255, 80, 80))
 
 
+class PulsoEMP(pg.sprite.Sprite):
+    def __init__(self, pos: Vec, dono_id: int):
+        super().__init__()
+        self.pos = Vec(pos)
+        self.dono_id = dono_id
+        self.r = 0.0
+        self.rect = pg.Rect(0, 0, int(C.EMP_RAIO_MAX * 2) + 8, int(C.EMP_RAIO_MAX * 2) + 8)
+
+    def ancorar(self, pos: Vec):
+        self.pos.xy = pos
+
+    def update(self, dt: float):
+        self.r += C.EMP_VEL_EXPANSAO * dt
+        if self.r >= C.EMP_RAIO_MAX:
+            self.kill()
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+    def draw(self, surf: pg.Surface):
+        if self.r < 3.0:
+            return
+        ro = max(4, int(self.r))
+        ri = max(2, ro - 6)
+        circulo(surf, self.pos, ro, C.EMP_COR_ANEL_A, esp=2)
+        circulo(surf, self.pos, ri, C.EMP_COR_ANEL_B, esp=1)
+
+
 class Asteroide(pg.sprite.Sprite):
     def __init__(self, pos: Vec, vel: Vec, tamanho: str):
         super().__init__()
