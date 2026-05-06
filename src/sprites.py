@@ -56,12 +56,15 @@ class PulsoEMP(pg.sprite.Sprite):
         self.pos = Vec(pos)
         self.dono_id = dono_id
         self.r = 0.0
+        self.r_ant = 0.0
+        self.ast_na_frente: set[int] = set()
         self.rect = pg.Rect(0, 0, int(C.EMP_RAIO_MAX * 2) + 8, int(C.EMP_RAIO_MAX * 2) + 8)
 
     def ancorar(self, pos: Vec):
         self.pos.xy = pos
 
     def update(self, dt: float):
+        self.r_ant = self.r
         self.r += C.EMP_VEL_EXPANSAO * dt
         if self.r >= C.EMP_RAIO_MAX:
             self.kill()

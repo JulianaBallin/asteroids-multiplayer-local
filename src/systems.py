@@ -93,6 +93,22 @@ class Mundo:
         self.pulsos_emp.add(PulsoEMP(Vec(nave.pos), jogador_id))
         self.cooldown_emp[jogador_id] = C.EMP_COOLDOWN
 
+    def _emp_contra_ast(self):
+        for pulso in list(self.pulsos_emp):
+            lim = pulso.r + C.EMP_HIT_BAND
+            for ast in list(self.asteroides):
+                aid = id(ast)
+                if aid in pulso.ast_na_frente:
+                    continue
+                delta = ast.pos - pulso.pos
+                dist = delta.length()
+                if dist < 1.5:
+                    continue
+                if not (pulso.r_ant < dist <= lim):
+                    continue
+                ast.vel += delta.normalize() * C.EMP_AST_IMPULSO
+                pulso.ast_na_frente.add(aid)
+
     # --- loop principal ---
 
     def update(self, dt: float, teclas):
@@ -117,6 +133,7 @@ class Mundo:
             if dono.ativa:
                 pulso.ancorar(dono.pos)
         self.pulsos_emp.update(dt)
+        self._emp_contra_ast()
 
         for grupo in self.balas:
             grupo.update(dt)
