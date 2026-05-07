@@ -84,6 +84,47 @@ class PulsoEMP(pg.sprite.Sprite):
         if ro >= 14:
             circulo(surf, self.pos, ro - 12, C.EMP_COR_FLASH, esp=1)
 
+class RastroGravitacional(pg.sprite.Sprite):
+    # Partícula deixada pela nave ao acelerar.
+    # Ela permanece no espaço por pouco tempo e cria uma pequena área de interferência.
+    def __init__(self, pos: Vec, dono_id: int, angulo: float):
+        super().__init__()
+        self.pos = Vec(pos)
+        self.dono_id = dono_id
+        self.angulo = angulo
+        self.ttl = C.RASTRO_TTL
+        self.tempo_total = C.RASTRO_TTL
+        self.r = C.RASTRO_RAIO_VISUAL
+        self.rect = pg.Rect(
+            0,
+            0,
+            C.RASTRO_RAIO_INFLUENCIA * 2,
+            C.RASTRO_RAIO_INFLUENCIA * 2
+        )
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+    def update(self, dt: float):
+        self.ttl -= dt
+
+        if self.ttl <= 0:
+            self.kill()
+
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+    def intensidade(self) -> float:
+        return max(0.0, self.ttl / self.tempo_total)
+
+    def draw(self, surf: pg.Surface):
+        intensidade = self.intensidade()
+
+        if intensidade <= 0:
+            return
+
+        raio_externo = max(2, int(C.RASTRO_RAIO_INFLUENCIA * 0.22 * intensidade))
+        raio_interno = max(1, int(C.RASTRO_RAIO_VISUAL * intensidade))
+
+        circulo(surf, self.pos, raio_externo, C.RASTRO_COR_EXTERNA, esp=1)
+        circulo(surf, self.pos, raio_interno, C.RASTRO_COR_INTERNA, esp=2)
 
 class Asteroide(pg.sprite.Sprite):
     def __init__(self, pos: Vec, vel: Vec, tamanho: str):
@@ -159,6 +200,7 @@ class Nave(pg.sprite.Sprite):
         self.cooldown_tiro = 0.0
         self.invuln = 0.0
         self.emp_jam = 0.0
+        self.acelerando = False
         self.vidas = C.VIDAS_INICIAIS
         self.pontos = 0
         self.jogador_id = jogador_id
@@ -169,14 +211,20 @@ class Nave(pg.sprite.Sprite):
 
     def controlar(self, teclas, dt: float):
         ctrl = C.CONTROLES[self.jogador_id]
+
+        self.acelerando = False
+
         rot = C.VEL_ROTACAO * (C.EMP_JAM_ROT_FATOR if self.emp_jam > 0 else 1.0)
+
         if teclas[ctrl['esq']]:
             self.angulo -= rot * dt
+
         if teclas[ctrl['dir']]:
             self.angulo += rot * dt
+
         if teclas[ctrl['cima']]:
             self.vel += ang_vec(self.angulo) * C.EMPUXO * dt
-        self.vel *= C.FRICCAO
+            self.acelerando = True
 
     def atirar(self) -> 'Bala | None':
         if self.cooldown_tiro > 0:
