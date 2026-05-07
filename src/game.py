@@ -223,11 +223,18 @@ class Jogo:
                 emp_txt = "EMP: OK" if cd <= 0 else f"EMP: {cd:0.1f}s"
                 emp_cor = C.COR_RESGATE if cd <= 0 else C.CINZA_CLARO
                 txt(self.tela, self.font_pequena, emp_txt, x + 96, 5, emp_cor)
+                bar_x, bar_y, bar_w = x + 96, 18, 84
+                pg.draw.rect(self.tela, C.CINZA, (bar_x, bar_y, bar_w, 4))
+                if cd <= 0:
+                    pg.draw.rect(self.tela, C.COR_RESGATE, (bar_x, bar_y, bar_w, 4))
+                else:
+                    fill = int(bar_w * (1.0 - cd / C.EMP_COOLDOWN))
+                    pg.draw.rect(self.tela, C.EMP_COR_ANEL_A, (bar_x, bar_y, fill, 4))
 
                 if nave.emp_jam > 0:
-                    txt(self.tela, self.font_pequena, "JAM", x + 96, 18, (255, 120, 120))
+                    txt(self.tela, self.font_pequena, "JAM", x + 96, 24, C.EMP_COR_JAM)
                 elif nave.invuln > 0:
-                    txt(self.tela, self.font_pequena, "INV", x + 96, 18, (120, 255, 160))
+                    txt(self.tela, self.font_pequena, "INV", x + 96, 24, (120, 255, 160))
 
         txt(self.tela, self.font_pequena,
             f"Onda {self.mundo.onda}", C.LARGURA // 2 - 26, 5, C.CINZA_CLARO)
