@@ -73,7 +73,7 @@ Os jogadores são divididos em duas equipes fixas: **Equipe A** (J1 e J2) contra
 | **Cores por jogador** | Ciano (J1), Amarelo (J2), Verde (J3), Vermelho (J4) |
 | **Pontuação individual** | Cada jogador acumula pontos separadamente |
 | **Vidas individuais** | Cada nave tem 3 vidas independentes |
-| **HUD dividido** | Topo da tela dividido em seções por jogador |
+| **HUD dividido** | Topo da tela dividido em seções por jogador, com vidas, pontos e estado do EMP |
 | **Placar final** | Ranking por pontos ao encerrar a partida |
 | **OVNI inteligente** | Mira automaticamente na nave viva mais próxima |
 | **Fogo amigo** | Ativo nos modos competitivos (Duelo, Todos vs Todos, Equipes) |
