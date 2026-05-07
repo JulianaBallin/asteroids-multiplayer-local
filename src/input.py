@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 from __future__ import annotations
 
+=======
+>>>>>>> 3819011 (feat(input): adiciona suporte a joystick no multiplayer)
 from dataclasses import dataclass
 import pygame as pg
 import config as C
