@@ -94,7 +94,11 @@ Quando um jogador perde todas as suas vidas nos modos Cooperativo ou Equipes, su
 
 **Ana Beatriz Maciel Nunes**
 
-*(mecânica a implementar)*
+Ana Beatriz Maciel Nunes - Rastro Gravitacional
+
+O Rastro Gravitacional transforma o movimento da nave em uma mecânica estratégica. Sempre que o jogador acelera, a nave deixa pequenas partículas de energia no espaço por alguns segundos. Essas partículas criam uma área de interferência que altera levemente a trajetória de objetos próximos.
+
+Asteroides e projéteis que passam pelo rastro sofrem um pequeno desvio, criando a sensação de curvatura espacial. Em modos competitivos, naves e balas inimigas também podem ser afetadas, permitindo que o jogador use o próprio deslocamento para controlar espaço, atrapalhar adversários e criar rotas defensivas.
 
 <br>
 

@@ -162,8 +162,8 @@ class Mundo:
         intensidade_dist = 1.0 - (dist / C.RASTRO_RAIO_INFLUENCIA)
         intensidade_total = intensidade_dist * rastro.intensidade()
 
-        # Direção tangencial: cria sensação de curvatura/orbita, não só empurrão reto
-        direcao = delta.normalize().rotate(90)
+        # Empurra objetos para fora do rastro, criando uma distorção visível de trajetória
+        direcao = delta.normalize()
 
         return direcao * forca_base * intensidade_total * dt
 

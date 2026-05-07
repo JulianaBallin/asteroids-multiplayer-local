@@ -182,8 +182,11 @@ class Jogo:
             nota = "RESGATE: fique proximo da carcaca de um aliado por 3s para revive-lo (+500 pts)"
             txt(self.tela, self.font_pequena, nota, cx - 235, 444, C.COR_RESGATE)
 
-        txt(self.tela, self.font_pequena, "Seta esq/dir: mudar modo   ESC: sair",
-            cx - 140, 508, C.CINZA)
+        pg.draw.line(self.tela, C.CINZA, (cx - 290, 468), (cx + 290, 468))
+        nota_rastro = "RASTRO GRAVITACIONAL: ao acelerar, a nave deixa um rastro que desvia objetos proximos"
+        txt(self.tela, self.font_pequena, nota_rastro, cx - 275, 476, C.RASTRO_COR_INTERNA)
+
+        txt(self.tela, self.font_pequena, "Seta esq/dir: mudar modo ESC: sair", cx - 140, 530, C.CINZA)
 
     # --- tela: hud durante o jogo ---
 
