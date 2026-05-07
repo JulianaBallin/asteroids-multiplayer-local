@@ -219,6 +219,16 @@ class Jogo:
                 txt(self.tela, self.font_pequena, vidas_str, x, 18, cor)
                 txt(self.tela, self.font_pequena, f"{nave.pontos:06d}", x, 31, cor)
 
+                cd = self.mundo.cooldown_emp[i]
+                emp_txt = "EMP: OK" if cd <= 0 else f"EMP: {cd:0.1f}s"
+                emp_cor = C.COR_RESGATE if cd <= 0 else C.CINZA_CLARO
+                txt(self.tela, self.font_pequena, emp_txt, x + 96, 5, emp_cor)
+
+                if nave.emp_jam > 0:
+                    txt(self.tela, self.font_pequena, "JAM", x + 96, 18, (255, 120, 120))
+                elif nave.invuln > 0:
+                    txt(self.tela, self.font_pequena, "INV", x + 96, 18, (120, 255, 160))
+
         txt(self.tela, self.font_pequena,
             f"Onda {self.mundo.onda}", C.LARGURA // 2 - 26, 5, C.CINZA_CLARO)
         pg.draw.line(self.tela, C.CINZA, (0, 48), (C.LARGURA, 48))
