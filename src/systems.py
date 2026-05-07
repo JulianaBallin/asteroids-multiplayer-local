@@ -2,7 +2,7 @@ from random import uniform
 import pygame as pg
 import config as C
 from config import Modo
-from sprites import Asteroide, BalaOVNI, Carcaca, Nave, OVNI, PulsoEMP
+from sprites import Asteroide, BalaOVNI, Carcaca, Nave, OVNI, PulsoEMP, RastroGravitacional
 from utils import Vec, borda_aleatoria, vec_aleatorio
 
 
@@ -25,6 +25,8 @@ class Mundo:
         self.carcacas = pg.sprite.Group()
         self.pulsos_emp = pg.sprite.Group()
         self.cooldown_emp = [0.0] * C.MAX_JOGADORES
+        self.rastros_grav = pg.sprite.Group()
+        self.cooldown_rastro = [0.0] * C.MAX_JOGADORES
 
         # Rastreia quanto tempo cada nave fica próxima de cada carcaça
         # estrutura: {id(carcaca): {jogador_id: segundos_acumulados}}
@@ -131,6 +133,91 @@ class Mundo:
                     nave.invuln = max(nave.invuln, C.EMP_INVULN_ALIADO)
                 else:
                     nave.emp_jam = max(nave.emp_jam, C.EMP_JAM_SEG)
+    
+    def _criar_rastro_se_necessario(self, nave: Nave, dt: float):
+        jid = nave.jogador_id
+
+        if self.cooldown_rastro[jid] > 0:
+            self.cooldown_rastro[jid] = max(0.0, self.cooldown_rastro[jid] - dt)
+
+        if not nave.acelerando:
+            return
+
+        if self.cooldown_rastro[jid] > 0:
+            return
+
+        # Cria o rastro um pouco atrás da nave, para parecer que saiu do motor
+        pos_rastro = nave.pos - nave.vel.normalize() * 8 if nave.vel.length_squared() > 0 else Vec(nave.pos)
+        self.rastros_grav.add(RastroGravitacional(pos_rastro, jid, nave.angulo))
+        self.cooldown_rastro[jid] = C.RASTRO_INTERVALO
+
+
+    def _forca_gravitacional(self, pos_obj: Vec, rastro: RastroGravitacional, forca_base: float, dt: float) -> Vec:
+        delta = pos_obj - rastro.pos
+        dist = delta.length()
+
+        if dist <= 1 or dist > C.RASTRO_RAIO_INFLUENCIA:
+            return Vec(0, 0)
+
+        intensidade_dist = 1.0 - (dist / C.RASTRO_RAIO_INFLUENCIA)
+        intensidade_total = intensidade_dist * rastro.intensidade()
+
+        # Direção tangencial: cria sensação de curvatura/orbita, não só empurrão reto
+        direcao = delta.normalize().rotate(90)
+
+        return direcao * forca_base * intensidade_total * dt
+
+
+    def _aplicar_rastros_gravitacionais(self, dt: float):
+        for rastro in list(self.rastros_grav):
+            # Asteroides sofrem leve curvatura ao atravessar o rastro
+            for ast in self.asteroides:
+                ast.vel += self._forca_gravitacional(
+                    ast.pos,
+                    rastro,
+                    C.RASTRO_FORCA_ASTEROIDE,
+                    dt
+                )
+
+            # Balas do OVNI são desviadas com um pouco mais de força
+            for bala in self.balas_ovni:
+                bala.vel += self._forca_gravitacional(
+                    bala.pos,
+                    rastro,
+                    C.RASTRO_FORCA_BALA,
+                    dt
+                )
+
+            # Balas de jogadores adversários também podem ser desviadas em modos competitivos
+            for dono_bala, grupo in enumerate(self.balas):
+                if dono_bala == rastro.dono_id:
+                    continue
+
+                if self._sao_aliados(rastro.dono_id, dono_bala):
+                    continue
+
+                for bala in grupo:
+                    bala.vel += self._forca_gravitacional(
+                        bala.pos,
+                        rastro,
+                        C.RASTRO_FORCA_BALA,
+                        dt
+                    )
+
+            # Naves inimigas que passam pelo rastro sofrem leve desvio de movimento
+            for nave in self.naves_vivas():
+                if nave.jogador_id == rastro.dono_id:
+                    continue
+
+                if self._sao_aliados(rastro.dono_id, nave.jogador_id):
+                    continue
+
+                nave.vel += self._forca_gravitacional(
+                    nave.pos,
+                    rastro,
+                    C.RASTRO_FORCA_NAVE,
+                    dt
+                )
 
             for ovni in list(self.ovnis):
                 oid = id(ovni)
@@ -156,6 +243,8 @@ class Mundo:
         for nave in vivas:
             nave.controlar(teclas, dt)
             nave.update(dt)
+            self._criar_rastro_se_necessario(nave, dt)
+
             # Tiro contínuo enquanto a tecla estiver pressionada
             if teclas[C.CONTROLES[nave.jogador_id]['fogo']]:
                 self.tentar_atirar(nave.jogador_id)
@@ -171,6 +260,8 @@ class Mundo:
         self.pulsos_emp.update(dt)
         self._emp_contra_ast()
         self._emp_contra_naves()
+        self.rastros_grav.update(dt)
+        self._aplicar_rastros_gravitacionais(dt)
 
         for grupo in self.balas:
             grupo.update(dt)
@@ -394,6 +485,8 @@ class Mundo:
             ast.draw(surf)
         for ovni in self.ovnis:
             ovni.draw(surf)
+        for rastro in self.rastros_grav:
+            rastro.draw(surf)
         for bala in self.balas_ovni:
             bala.draw(surf)
         for i, grupo in enumerate(self.balas):
