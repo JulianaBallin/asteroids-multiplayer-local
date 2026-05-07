@@ -106,3 +106,14 @@ ALCANCE_RESGATE = 80      # distância máxima em pixels para iniciar o resgate
 DURACAO_RESGATE = 3.0     # segundos necessários para completar o resgate
 TTL_CARCACA = 10.0        # tempo que a carcaça permanece disponível no mapa
 COR_RESGATE = (0, 255, 120)  # cor da barra de progresso de resgate
+
+# Rastro Gravitacional
+RASTRO_INTERVALO = 0.08
+RASTRO_TTL = 1.8
+RASTRO_RAIO_VISUAL = 6
+RASTRO_RAIO_INFLUENCIA = 70
+RASTRO_FORCA_ASTEROIDE = 85.0
+RASTRO_FORCA_BALA = 135.0
+RASTRO_FORCA_NAVE = 55.0
+RASTRO_COR_EXTERNA = (120, 80, 255)
+RASTRO_COR_INTERNA = (80, 210, 255)
