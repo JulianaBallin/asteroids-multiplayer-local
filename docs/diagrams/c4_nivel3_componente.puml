@@ -11,27 +11,27 @@ Container_Boundary(app, "Aplicação Python/Pygame") {
         "Instancia Jogo e inicia o loop principal.")
 
     Component(game, "game.py — Jogo", "Controlador de Cenas",
-        "Gerencia o ciclo de cenas (menu, jogando, placar).\nLê eventos de teclado.\nRenderiza HUD e telas de menu/placar.")
+        "Gerencia ciclo de cenas (menu, jogando, placar).\nLê eventos de teclado e dispara Pulsar EMP.\nRenderiza HUD com vidas, pontos, cooldown do EMP\ne estado de invulnerabilidade/jam por jogador.")
 
     Component(systems, "systems.py — Mundo", "Lógica do Jogo",
-        "Coordena o estado do mundo:\ncria ondas, resolve colisões,\natualiza mecânica de resgate entre aliados.")
+        "Coordena o estado do mundo: cria ondas de asteroides,\nresolve colisões com fogo amigo por modo,\ngerencia Pulsar EMP (tentar_emp) com cooldown individual,\naplicação de rastro gravitacional sobre objetos próximos\ne mecânica de resgate de aliados (carcacas).")
 
     Component(sprites, "sprites.py — Entidades", "Objetos do Jogo",
-        "Define Nave, Bala, BalaOVNI, Asteroide,\nOVNI e Carcaca (destroço resgatável).\nCada entidade tem update() e draw().")
+        "Define todas as entidades do jogo:\n- Nave: nave do jogador com cor, controles e EMP jam\n- Bala / BalaOVNI: projéteis com dono rastreado\n- Asteroide: polígono irregular com física\n- OVNI: inimigo inteligente com mira proporcional\n- Carcaca: destroço resgatável com barra de progresso\n- PulsoEMP: onda expansiva visual do Pulsar EMP\n- RastroGravitacional: partícula de interferência deixada ao acelerar")
 
     Component(utils, "utils.py — Utilitários", "Funções Auxiliares",
-        "Vetor 2D, envolvimento de tela,\nfunções de desenho e geração aleatória.")
+        "Vec (Vector2), envolvimento de tela (wrap-around),\nfunções de desenho (circulo, poly, txt)\ne geração aleatória de posição e velocidade.")
 
     Component(config, "config.py — Configuração", "Constantes",
-        "Teclas Tectoy por jogador, cores,\nvelocidades, dimensões e parâmetros\nda mecânica de resgate.")
+        "Teclas Tectoy por jogador, cores e posições de spawn,\nvelocidades e dimensões da nave/asteroides/OVNI,\nparâmetros do Pulsar EMP (raio, cooldown, cores, impulso),\nparâmetros do Rastro Gravitacional (força, TTL, raio)\ne parâmetros do Sistema de Resgate (alcance, duração, TTL).")
 }
 
 Rel(jogadores, game, "Envia entradas de teclado")
 Rel(main, game, "Instancia e inicia")
-Rel(game, systems, "Chama update() e draw() a cada frame")
-Rel(systems, sprites, "Cria, atualiza e destrói entidades")
-Rel(systems, config, "Lê constantes de jogo")
-Rel(sprites, utils, "Usa Vec, envolver(), ang_vec()")
-Rel(game, config, "Lê controles e cores dos jogadores")
+Rel(game, systems, "Chama update() e draw() a cada frame;\nenvia tentar_emp(i) ao pressionar tecla EMP")
+Rel(systems, sprites, "Cria, atualiza e destrói entidades;\naplicaRastro em RastroGravitacional;\ngerencia carcacas para resgate")
+Rel(systems, config, "Lê constantes de jogo e parâmetros das mecânicas")
+Rel(sprites, utils, "Usa Vec, envolver(), ang_vec(), circulo()")
+Rel(game, config, "Lê controles, cores e modos de jogo")
 
 @enduml
