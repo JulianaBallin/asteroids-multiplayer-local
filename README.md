@@ -94,19 +94,13 @@ Quando um jogador perde todas as suas vidas nos modos Cooperativo ou Equipes, su
 
 **Ana Beatriz Maciel Nunes**
 
-Ana Beatriz Maciel Nunes - Rastro Gravitacional
-
-O Rastro Gravitacional transforma o movimento da nave em uma mecânica estratégica. Sempre que o jogador acelera, a nave deixa pequenas partículas de energia no espaço por alguns segundos. Essas partículas criam uma área de interferência que altera levemente a trajetória de objetos próximos.
-
-Asteroides e projéteis que passam pelo rastro sofrem um pequeno desvio, criando a sensação de curvatura espacial. Em modos competitivos, naves e balas inimigas também podem ser afetadas, permitindo que o jogador use o próprio deslocamento para controlar espaço, atrapalhar adversários e criar rotas defensivas.
+*(mecânica a implementar)*
 
 <br>
 
-**Fernando Luiz da Silva Freire - Pulsar EMP**
+**Fernando Luiz da Silva Freire**
 
-O Pulsar EMP é uma habilidade especial disponível para cada jogador com tempo de recarga de 7 segundos. Ao ser ativado, a nave emite uma onda de pulso eletromagnético que se expande radialmente até 220 pixels ao redor da nave.
-
-Asteroides atingidos pelo pulso recebem um impulso de repulsão, alterando sua trajetória. Em modos cooperativos, naves aliadas dentro do alcance ganham invulnerabilidade temporária. Em modos competitivos, naves inimigas atingidas ficam com a rotação prejudicada por alguns segundos. O jogador que disparou o pulso não sofre nenhum efeito. O estado do EMP e seu tempo de recarga são exibidos no HUD de cada jogador.
+*(mecânica a implementar)*
 
 ---
 
