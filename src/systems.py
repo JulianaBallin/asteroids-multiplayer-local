@@ -147,18 +147,20 @@ class Mundo:
 
     # --- loop principal ---
 
-    def update(self, dt: float, teclas):
+    def update(self, dt: float, entradas):
         if self.fim_de_jogo:
             return
 
         vivas = self.naves_vivas()
 
         for nave in vivas:
-            nave.controlar(teclas, dt)
+            entrada = entradas[nave.jogador_id]
+            nave.controlar(entrada, dt)
             nave.update(dt)
-            # Tiro contínuo enquanto a tecla estiver pressionada
-            if teclas[C.CONTROLES[nave.jogador_id]['fogo']]:
+            if entrada.shoot:
                 self.tentar_atirar(nave.jogador_id)
+            if entrada.emp_pressed:
+                self.tentar_emp(nave.jogador_id)
 
         for j in range(self.num_jogadores):
             if self.cooldown_emp[j] > 0:

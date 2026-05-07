@@ -2,6 +2,7 @@ import sys
 import pygame as pg
 import config as C
 from config import Modo
+from input import InputManager
 from systems import Mundo
 from utils import txt
 
@@ -37,6 +38,11 @@ class Jogo:
         self.modo_idx = 1      # começa em Cooperativo
         self.num_jogadores = 2
         self.fade_fim = 0.0
+        self.input_manager = InputManager()
+        self.entradas_atuais = []
+        self.teste_dispositivo = [
+            {"mov": False, "tiro": False, "emp": False} for _ in range(C.MAX_JOGADORES)
+        ]
 
     # --- helpers ---
 
@@ -59,13 +65,20 @@ class Jogo:
                     sys.exit()
                 self._processar_evento(e)
 
-            teclas = pg.key.get_pressed()
+            self.input_manager.update()
+            entradas = self.input_manager.inputs_por_jogador(self.num_jogadores)
+            self.entradas_atuais = entradas
+            for i, e_in in enumerate(entradas):
+                t = self.teste_dispositivo[i]
+                t["mov"] = t["mov"] or e_in.rotate_left or e_in.rotate_right or e_in.thrust
+                t["tiro"] = t["tiro"] or e_in.shoot
+                t["emp"] = t["emp"] or e_in.emp_pressed
             self.tela.fill(C.PRETO)
 
             if self.cena == "menu":
                 self._desenhar_menu()
             elif self.cena == "jogando":
-                self.mundo.update(dt, teclas)
+                self.mundo.update(dt, entradas)
                 self.mundo.draw(self.tela, self.font_pequena)
                 self._desenhar_hud()
                 if self.mundo.fim_de_jogo:
@@ -78,41 +91,66 @@ class Jogo:
             pg.display.flip()
 
     def _processar_evento(self, e: pg.event.Event):
-        if e.type != pg.KEYDOWN:
+        if e.type not in (pg.KEYDOWN, pg.JOYBUTTONDOWN, pg.JOYHATMOTION):
             return
 
         if self.cena == "menu":
-            if e.key == pg.K_ESCAPE:
-                pg.quit()
-                sys.exit()
-            # Navega entre modos com as setas esquerda/direita
-            elif e.key == pg.K_LEFT:
-                self.modo_idx = (self.modo_idx - 1) % len(MODOS)
-                self._ajustar_jogadores()
-            elif e.key == pg.K_RIGHT:
-                self.modo_idx = (self.modo_idx + 1) % len(MODOS)
-                self._ajustar_jogadores()
-            # Ajusta número de jogadores (apenas nos modos com variação)
-            elif e.key in (pg.K_2, pg.K_3, pg.K_4):
-                n = {pg.K_2: 2, pg.K_3: 3, pg.K_4: 4}[e.key]
-                _, _, min_j, max_j, _ = self._modo_atual()
-                if min_j <= n <= max_j:
-                    self.num_jogadores = n
-            elif e.key in (pg.K_RETURN, pg.K_SPACE):
-                self._iniciar_jogo()
+            if e.type == pg.KEYDOWN:
+                if e.key == pg.K_ESCAPE:
+                    pg.quit()
+                    sys.exit()
+                elif e.key == pg.K_LEFT:
+                    self.modo_idx = (self.modo_idx - 1) % len(MODOS)
+                    self._ajustar_jogadores()
+                elif e.key == pg.K_RIGHT:
+                    self.modo_idx = (self.modo_idx + 1) % len(MODOS)
+                    self._ajustar_jogadores()
+                elif e.key in (pg.K_2, pg.K_3, pg.K_4):
+                    n = {pg.K_2: 2, pg.K_3: 3, pg.K_4: 4}[e.key]
+                    _, _, min_j, max_j, _ = self._modo_atual()
+                    if min_j <= n <= max_j:
+                        self.num_jogadores = n
+                elif e.key in (pg.K_RETURN, pg.K_SPACE):
+                    self._iniciar_jogo()
+            elif e.type == pg.JOYHATMOTION:
+                if e.hat != 0:
+                    return
+                if e.value[0] == -1:
+                    self.modo_idx = (self.modo_idx - 1) % len(MODOS)
+                    self._ajustar_jogadores()
+                elif e.value[0] == 1:
+                    self.modo_idx = (self.modo_idx + 1) % len(MODOS)
+                    self._ajustar_jogadores()
+                elif e.value[1] == 1:
+                    _, _, _, max_j, _ = self._modo_atual()
+                    self.num_jogadores = min(max_j, self.num_jogadores + 1)
+                elif e.value[1] == -1:
+                    _, _, min_j, _, _ = self._modo_atual()
+                    self.num_jogadores = max(min_j, self.num_jogadores - 1)
+            elif e.type == pg.JOYBUTTONDOWN:
+                if e.button == C.JOY_BTN_BACK:
+                    pg.quit()
+                    sys.exit()
+                if e.button in (C.JOY_BTN_START, C.JOY_BTN_SHOOT, C.JOY_BTN_SHOOT_ALT):
+                    self._iniciar_jogo()
 
         elif self.cena == "jogando":
-            if e.key == pg.K_ESCAPE:
+            if e.type == pg.KEYDOWN and e.key == pg.K_ESCAPE:
                 self.cena = "menu"
-            for i in range(self.num_jogadores):
-                if e.key == C.CONTROLES[i]['hiper']:
-                    self.mundo.tentar_emp(i)
+            elif e.type == pg.JOYBUTTONDOWN and e.button == C.JOY_BTN_BACK:
+                self.cena = "menu"
 
         elif self.cena == "placar":
-            if e.key == pg.K_ESCAPE:
-                self.cena = "menu"
-            elif e.key in (pg.K_RETURN, pg.K_SPACE):
-                self._iniciar_jogo()
+            if e.type == pg.KEYDOWN:
+                if e.key == pg.K_ESCAPE:
+                    self.cena = "menu"
+                elif e.key in (pg.K_RETURN, pg.K_SPACE):
+                    self._iniciar_jogo()
+            elif e.type == pg.JOYBUTTONDOWN:
+                if e.button == C.JOY_BTN_BACK:
+                    self.cena = "menu"
+                elif e.button in (C.JOY_BTN_START, C.JOY_BTN_SHOOT, C.JOY_BTN_SHOOT_ALT):
+                    self._iniciar_jogo()
 
     def _iniciar_jogo(self):
         _, modo, _, _, _ = self._modo_atual()
@@ -176,11 +214,42 @@ class Jogo:
                 linha = f"[Eq.{eq}] {linha}"
             txt(self.tela, self.font_pequena, linha, cx - 220, 364 + i * 16, cor)
 
+        y_disp = 364 + min(self.num_jogadores, 4) * 16 + 8
+        txt(self.tela, self.font_pequena, "DISPOSITIVOS", cx - 35, y_disp, C.CINZA_CLARO)
+        for i in range(min(self.num_jogadores, 4)):
+            nome = self.input_manager.dispositivo_jogador(i)
+            if len(nome) > 28:
+                nome = nome[:28] + "..."
+            txt(
+                self.tela,
+                self.font_pequena,
+                f"J{i + 1}: {nome}",
+                cx - 220,
+                y_disp + 14 + i * 14,
+                C.CORES_JOGADORES[i],
+            )
+            teste = self.teste_dispositivo[i]
+            status = (
+                f"   teste M:{'OK' if teste['mov'] else '--'} "
+                f"T:{'OK' if teste['tiro'] else '--'} "
+                f"E:{'OK' if teste['emp'] else '--'}"
+            )
+            txt(
+                self.tela,
+                self.font_pequena,
+                status,
+                cx - 40,
+                y_disp + 14 + i * 14,
+                C.CINZA_CLARO,
+            )
+        y_fim_disp = y_disp + 14 + min(self.num_jogadores, 4) * 14
+
         # Nota sobre resgate (só nos modos que o suportam)
         if modo in (Modo.COOPERATIVO, Modo.EQUIPES):
-            pg.draw.line(self.tela, C.CINZA, (cx - 290, 436), (cx + 290, 436))
+            y_resgate = min(C.ALTURA - 78, y_fim_disp + 14)
+            pg.draw.line(self.tela, C.CINZA, (cx - 290, y_resgate), (cx + 290, y_resgate))
             nota = "RESGATE: fique proximo da carcaca de um aliado por 3s para revive-lo (+500 pts)"
-            txt(self.tela, self.font_pequena, nota, cx - 235, 444, C.COR_RESGATE)
+            txt(self.tela, self.font_pequena, nota, cx - 235, y_resgate + 8, C.COR_RESGATE)
 
         txt(self.tela, self.font_pequena, "Seta esq/dir: mudar modo   ESC: sair",
             cx - 140, 508, C.CINZA)

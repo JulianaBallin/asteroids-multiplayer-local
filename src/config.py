@@ -106,3 +106,13 @@ ALCANCE_RESGATE = 80      # distância máxima em pixels para iniciar o resgate
 DURACAO_RESGATE = 3.0     # segundos necessários para completar o resgate
 TTL_CARCACA = 10.0        # tempo que a carcaça permanece disponível no mapa
 COR_RESGATE = (0, 255, 120)  # cor da barra de progresso de resgate
+
+# Joystick
+JOY_AXIS_LEFT_X = 0
+JOY_AXIS_LEFT_Y = 1
+JOY_BTN_SHOOT = 7     # R2/RT (digital) em mapeamento comum
+JOY_BTN_SHOOT_ALT = 5 # R1/RB fallback
+JOY_BTN_EMP = 4       # L1/LB
+JOY_BTN_BACK = 8      # Select/Back
+JOY_BTN_START = 9     # Start/Menu
+JOY_DEADZONE = 0.25

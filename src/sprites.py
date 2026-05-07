@@ -167,14 +167,13 @@ class Nave(pg.sprite.Sprite):
         self.ativa = True
         self.rect = pg.Rect(0, 0, self.r * 2, self.r * 2)
 
-    def controlar(self, teclas, dt: float):
-        ctrl = C.CONTROLES[self.jogador_id]
+    def controlar(self, entrada, dt: float):
         rot = C.VEL_ROTACAO * (C.EMP_JAM_ROT_FATOR if self.emp_jam > 0 else 1.0)
-        if teclas[ctrl['esq']]:
+        if entrada.rotate_left:
             self.angulo -= rot * dt
-        if teclas[ctrl['dir']]:
+        if entrada.rotate_right:
             self.angulo += rot * dt
-        if teclas[ctrl['cima']]:
+        if entrada.thrust:
             self.vel += ang_vec(self.angulo) * C.EMPUXO * dt
         self.vel *= C.FRICCAO
 
