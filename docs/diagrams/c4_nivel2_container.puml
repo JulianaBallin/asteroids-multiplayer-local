@@ -3,15 +3,15 @@
 
 title [Nível 2] Diagrama de Container — Asteroids Multiplayer Local
 
-Person(jogadores, "1 a 4 Jogadores", "Interagem simultaneamente via teclado")
+Person(jogadores, "1 a 4 Jogadores", "Interagem simultaneamente via teclado compartilhado")
 
 System_Boundary(sistema, "Asteroids Multiplayer Local") {
 
     Container(app, "Aplicação Python/Pygame", "Python 3.11 + pygame 2.x",
-        "Executa o loop principal do jogo,\ngerencia cenas, renderiza gráficos\ne processa entradas de teclado.")
+        "Executa o loop principal do jogo,\ngerencia cenas (menu, jogo, placar),\nrenderiza HUD e processa entradas de teclado.\nSuporta 5 modos de jogo e 3 mecânicas inéditas.")
 
     ContainerDb(config, "Módulo de Configuração", "config.py",
-        "Centraliza todas as constantes do jogo:\nresoluções, cores, velocidades,\nmapeamento de controles Tectoy.")
+        "Centraliza todas as constantes do jogo:\nresoluções (1280x720), cores por jogador,\nmapeamento de controles Tectoy,\nparâmetros do EMP, Rastro Gravitacional e Resgate.")
 }
 
 Rel(jogadores, app, "Envia comandos via teclado (pygame events)")
