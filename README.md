@@ -102,9 +102,11 @@ Asteroides e projéteis que passam pelo rastro sofrem um pequeno desvio, criando
 
 <br>
 
-**Fernando Luiz da Silva Freire**
+**Fernando Luiz da Silva Freire - Pulsar EMP**
 
-*(mecânica a implementar)*
+O Pulsar EMP é uma habilidade especial disponível para cada jogador com tempo de recarga de 7 segundos. Ao ser ativado, a nave emite uma onda de pulso eletromagnético que se expande radialmente até 220 pixels ao redor da nave.
+
+Asteroides atingidos pelo pulso recebem um impulso de repulsão, alterando sua trajetória. Em modos cooperativos, naves aliadas dentro do alcance ganham invulnerabilidade temporária. Em modos competitivos, naves inimigas atingidas ficam com a rotação prejudicada por alguns segundos. O jogador que disparou o pulso não sofre nenhum efeito. O estado do EMP e seu tempo de recarga são exibidos no HUD de cada jogador.
 
 ---
 
