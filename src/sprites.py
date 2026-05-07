@@ -75,9 +75,14 @@ class PulsoEMP(pg.sprite.Sprite):
         if self.r < 3.0:
             return
         ro = max(4, int(self.r))
-        ri = max(2, ro - 6)
-        circulo(surf, self.pos, ro, C.EMP_COR_ANEL_A, esp=2)
-        circulo(surf, self.pos, ri, C.EMP_COR_ANEL_B, esp=1)
+        pos = self.pos
+        if ro < 22:
+            pg.draw.circle(surf, C.EMP_COR_FLASH, (int(pos.x), int(pos.y)), 22)
+        circulo(surf, self.pos, ro, C.EMP_COR_ANEL_A, esp=4)
+        if ro >= 8:
+            circulo(surf, self.pos, ro - 6, C.EMP_COR_ANEL_B, esp=2)
+        if ro >= 14:
+            circulo(surf, self.pos, ro - 12, C.EMP_COR_FLASH, esp=1)
 
 
 class Asteroide(pg.sprite.Sprite):
@@ -204,6 +209,8 @@ class Nave(pg.sprite.Sprite):
         # Anel piscante durante invulnerabilidade
         if self.invuln > 0 and int(self.invuln * 10) % 2 == 0:
             circulo(surf, self.pos, self.r + 6, self.cor)
+        if self.emp_jam > 0 and int(self.emp_jam * 8) % 2 == 0:
+            circulo(surf, self.pos, self.r + 5, C.EMP_COR_JAM)
 
         pg.draw.polygon(surf, self.cor, [p1, p2, p3], width=2)
 
@@ -217,19 +224,22 @@ class OVNI(pg.sprite.Sprite):
         self.r = p["r"]
         self.mira = p["mira"]
         self.cooldown = C.INTERVALO_TIRO_OVNI
+        self.emp_jam = 0.0
         self.direcao = Vec(1 if uniform(0, 1) < 0.5 else -1, 0)
         self.rect = pg.Rect(0, 0, self.r * 2, self.r * 2)
 
     def update(self, dt: float):
         self.pos += self.direcao * C.VEL_OVNI * dt
         self.cooldown -= dt
+        if self.emp_jam > 0:
+            self.emp_jam = max(0.0, self.emp_jam - dt)
         # Sai da tela → se destrói
         if self.pos.x < -self.r * 2 or self.pos.x > C.LARGURA + self.r * 2:
             self.kill()
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def atirar_em(self, alvo: Vec) -> 'BalaOVNI | None':
-        if self.cooldown > 0:
+        if self.cooldown > 0 or self.emp_jam > 0:
             return None
         d = Vec(alvo) - self.pos
         if d.length_squared() == 0:
@@ -243,6 +253,8 @@ class OVNI(pg.sprite.Sprite):
 
     def draw(self, surf: pg.Surface):
         w, h = self.r * 2, self.r
+        if self.emp_jam > 0 and int(self.emp_jam * 8) % 2 == 0:
+            circulo(surf, self.pos, self.r + 4, C.EMP_COR_JAM)
         pg.draw.ellipse(surf, C.BRANCO,
                         (int(self.pos.x - w / 2), int(self.pos.y - h / 2), w, h), width=1)
         pg.draw.ellipse(surf, C.BRANCO,

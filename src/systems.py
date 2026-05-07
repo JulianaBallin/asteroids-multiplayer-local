@@ -132,6 +132,19 @@ class Mundo:
                 else:
                     nave.emp_jam = max(nave.emp_jam, C.EMP_JAM_SEG)
 
+            for ovni in list(self.ovnis):
+                oid = id(ovni)
+                if oid in pulso.naves_na_frente:
+                    continue
+                delta = ovni.pos - pulso.pos
+                dist = delta.length()
+                if dist < 1.5:
+                    continue
+                if not (pulso.r_ant < dist <= lim):
+                    continue
+                pulso.naves_na_frente.add(oid)
+                ovni.emp_jam = max(ovni.emp_jam, C.EMP_JAM_SEG)
+
     # --- loop principal ---
 
     def update(self, dt: float, teclas):
