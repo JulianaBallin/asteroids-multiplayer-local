@@ -2,7 +2,7 @@ from random import uniform
 import pygame as pg
 import config as C
 from config import Modo
-from sprites import Asteroide, BalaOVNI, Carcaca, Nave, OVNI
+from sprites import Asteroide, BalaOVNI, Carcaca, Nave, OVNI, PulsoEMP
 from utils import Vec, borda_aleatoria, vec_aleatorio
 
 
@@ -23,6 +23,8 @@ class Mundo:
         self.asteroides = pg.sprite.Group()
         self.ovnis = pg.sprite.Group()
         self.carcacas = pg.sprite.Group()
+        self.pulsos_emp = pg.sprite.Group()
+        self.cooldown_emp = [0.0] * C.MAX_JOGADORES
 
         # Rastreia quanto tempo cada nave fica próxima de cada carcaça
         # estrutura: {id(carcaca): {jogador_id: segundos_acumulados}}
@@ -82,9 +84,53 @@ class Mundo:
         if b:
             self.balas[jogador_id].add(b)
 
-    def hiperspace(self, jogador_id: int):
-        if self.naves[jogador_id].ativa:
-            self.naves[jogador_id].hiperspace()
+    def tentar_emp(self, jogador_id: int):
+        nave = self.naves[jogador_id]
+        if not nave.ativa:
+            return
+        if self.cooldown_emp[jogador_id] > 0:
+            return
+        self.pulsos_emp.add(PulsoEMP(Vec(nave.pos), jogador_id))
+        self.cooldown_emp[jogador_id] = C.EMP_COOLDOWN
+
+    def _emp_contra_ast(self):
+        for pulso in list(self.pulsos_emp):
+            lim = pulso.r + C.EMP_HIT_BAND
+            for ast in list(self.asteroides):
+                aid = id(ast)
+                if aid in pulso.ast_na_frente:
+                    continue
+                delta = ast.pos - pulso.pos
+                dist = delta.length()
+                if dist < 1.5:
+                    continue
+                if not (pulso.r_ant < dist <= lim):
+                    continue
+                ast.vel += delta.normalize() * C.EMP_AST_IMPULSO
+                pulso.ast_na_frente.add(aid)
+
+    def _emp_contra_naves(self):
+        for pulso in list(self.pulsos_emp):
+            lim = pulso.r + C.EMP_HIT_BAND
+            for nave in self.naves:
+                if not nave.ativa:
+                    continue
+                jid = nave.jogador_id
+                if jid == pulso.dono_id:
+                    continue
+                if jid in pulso.naves_na_frente:
+                    continue
+                delta = nave.pos - pulso.pos
+                dist = delta.length()
+                if dist < 1.5:
+                    continue
+                if not (pulso.r_ant < dist <= lim):
+                    continue
+                pulso.naves_na_frente.add(jid)
+                if self._sao_aliados(pulso.dono_id, jid):
+                    nave.invuln = max(nave.invuln, C.EMP_INVULN_ALIADO)
+                else:
+                    nave.emp_jam = max(nave.emp_jam, C.EMP_JAM_SEG)
 
     # --- loop principal ---
 
@@ -100,6 +146,18 @@ class Mundo:
             # Tiro contínuo enquanto a tecla estiver pressionada
             if teclas[C.CONTROLES[nave.jogador_id]['fogo']]:
                 self.tentar_atirar(nave.jogador_id)
+
+        for j in range(self.num_jogadores):
+            if self.cooldown_emp[j] > 0:
+                self.cooldown_emp[j] = max(0.0, self.cooldown_emp[j] - dt)
+
+        for pulso in self.pulsos_emp:
+            dono = self.naves[pulso.dono_id]
+            if dono.ativa:
+                pulso.ancorar(dono.pos)
+        self.pulsos_emp.update(dt)
+        self._emp_contra_ast()
+        self._emp_contra_naves()
 
         for grupo in self.balas:
             grupo.update(dt)
@@ -331,6 +389,8 @@ class Mundo:
                 bala.draw(surf, cor)
         for carcaca in self.carcacas:
             carcaca.draw(surf)
+        for pulso in self.pulsos_emp:
+            pulso.draw(surf)
         for nave in self.naves:
             nave.draw(surf)
             if nave.ativa:

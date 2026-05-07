@@ -50,6 +50,36 @@ class BalaOVNI(pg.sprite.Sprite):
         circulo(surf, self.pos, self.r, (255, 80, 80))
 
 
+class PulsoEMP(pg.sprite.Sprite):
+    def __init__(self, pos: Vec, dono_id: int):
+        super().__init__()
+        self.pos = Vec(pos)
+        self.dono_id = dono_id
+        self.r = 0.0
+        self.r_ant = 0.0
+        self.ast_na_frente: set[int] = set()
+        self.naves_na_frente: set[int] = set()
+        self.rect = pg.Rect(0, 0, int(C.EMP_RAIO_MAX * 2) + 8, int(C.EMP_RAIO_MAX * 2) + 8)
+
+    def ancorar(self, pos: Vec):
+        self.pos.xy = pos
+
+    def update(self, dt: float):
+        self.r_ant = self.r
+        self.r += C.EMP_VEL_EXPANSAO * dt
+        if self.r >= C.EMP_RAIO_MAX:
+            self.kill()
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+    def draw(self, surf: pg.Surface):
+        if self.r < 3.0:
+            return
+        ro = max(4, int(self.r))
+        ri = max(2, ro - 6)
+        circulo(surf, self.pos, ro, C.EMP_COR_ANEL_A, esp=2)
+        circulo(surf, self.pos, ri, C.EMP_COR_ANEL_B, esp=1)
+
+
 class Asteroide(pg.sprite.Sprite):
     def __init__(self, pos: Vec, vel: Vec, tamanho: str):
         super().__init__()
@@ -123,6 +153,7 @@ class Nave(pg.sprite.Sprite):
         self.angulo = -90.0
         self.cooldown_tiro = 0.0
         self.invuln = 0.0
+        self.emp_jam = 0.0
         self.vidas = C.VIDAS_INICIAIS
         self.pontos = 0
         self.jogador_id = jogador_id
@@ -133,10 +164,11 @@ class Nave(pg.sprite.Sprite):
 
     def controlar(self, teclas, dt: float):
         ctrl = C.CONTROLES[self.jogador_id]
+        rot = C.VEL_ROTACAO * (C.EMP_JAM_ROT_FATOR if self.emp_jam > 0 else 1.0)
         if teclas[ctrl['esq']]:
-            self.angulo -= C.VEL_ROTACAO * dt
+            self.angulo -= rot * dt
         if teclas[ctrl['dir']]:
-            self.angulo += C.VEL_ROTACAO * dt
+            self.angulo += rot * dt
         if teclas[ctrl['cima']]:
             self.vel += ang_vec(self.angulo) * C.EMPUXO * dt
         self.vel *= C.FRICCAO
@@ -148,12 +180,6 @@ class Nave(pg.sprite.Sprite):
         self.cooldown_tiro = C.TAXA_TIRO
         return Bala(self.pos + d * (self.r + 6), self.vel + d * C.VEL_BALA, self.jogador_id)
 
-    def hiperspace(self):
-        self.pos = Vec(uniform(0, C.LARGURA), uniform(0, C.ALTURA))
-        self.vel.xy = (0, 0)
-        self.invuln = 1.0
-        self.pontos = max(0, self.pontos - C.CUSTO_HIPER)
-
     def update(self, dt: float):
         if not self.ativa:
             return
@@ -161,6 +187,8 @@ class Nave(pg.sprite.Sprite):
             self.cooldown_tiro -= dt
         if self.invuln > 0:
             self.invuln -= dt
+        if self.emp_jam > 0:
+            self.emp_jam = max(0.0, self.emp_jam - dt)
         self.pos += self.vel * dt
         self.pos = envolver(self.pos)
         self.rect.center = (int(self.pos.x), int(self.pos.y))

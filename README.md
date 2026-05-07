@@ -106,14 +106,14 @@ Quando um jogador perde todas as suas vidas nos modos Cooperativo ou Equipes, su
 
 <h2 align="center">🎮 Controles (Tectoy)</h2>
 
-| Jogador | Esquerda | Direita | Acelerar | Fogo | Hiperspace |
+| Jogador | Esquerda | Direita | Acelerar | Fogo | Pulsar EMP |
 |---|---|---|---|---|---|
 | **J1** | `A` | `D` | `W` | `LSHIFT` | `Q` |
 | **J2** | `←` | `→` | `↑` | `RSHIFT` | `P` |
 | **J3** | `J` | `L` | `I` | `H` | `Y` |
 | **J4** | `Num4` | `Num6` | `Num8` | `Num0` | `NumEnter` |
 
-> **Hiperspace:** teletransporta a nave para posição aleatória com custo de 250 pontos.
+> **Pulsar EMP:** mesmas teclas de antes, espera antes de repetir; empurra asteroides. Outra nave no alcance da onda: mesmo time/coop ganha invulnerabilidade curta; duel, todos-vs-todos ou equipa adversária ficam com rotação mais lenta uns segundos. Quem dispara não leva esse “lerdo”.
 
 ---
 

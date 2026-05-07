@@ -25,7 +25,7 @@ POSICOES_SPAWN = [
 ]
 
 # Controles Tectoy por jogador
-# Ordem: esquerda, direita, cima, fogo, hiperspace
+# Ordem: esquerda, direita, cima, fogo, hiper (Pulsar EMP)
 CONTROLES = [
     # J1: WASD
     {'esq': pg.K_a, 'dir': pg.K_d, 'cima': pg.K_w, 'fogo': pg.K_LSHIFT, 'hiper': pg.K_q},
@@ -47,8 +47,19 @@ EMPUXO = 220.0
 FRICCAO = 0.995
 TAXA_TIRO = 0.2
 VEL_BALA = 420.0
-CUSTO_HIPER = 250
 MAX_BALAS_POR_JOGADOR = 4
+
+# Pulsar EMP (mesma tecla que o antigo HIPER)
+EMP_RAIO_MAX = 220.0
+EMP_VEL_EXPANSAO = 480.0
+EMP_HIT_BAND = 20.0
+EMP_COOLDOWN = 7.0
+EMP_COR_ANEL_A = (150, 90, 255)
+EMP_COR_ANEL_B = (90, 40, 180)
+EMP_AST_IMPULSO = 380.0
+EMP_INVULN_ALIADO = 2.2
+EMP_JAM_SEG = 2.5
+EMP_JAM_ROT_FATOR = 0.32
 
 # Asteroides
 VEL_AST_MIN = 30.0
