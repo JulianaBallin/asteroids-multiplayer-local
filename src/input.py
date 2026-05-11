@@ -4,22 +4,25 @@ from dataclasses import dataclass
 from typing import Any, Optional, cast
 
 import pygame as pg
+                                        
 import config as C
 
+# Perfil mais comum em controles PS3/genéricos mapeados pelo pygame.
 _PS3_PERFIL = {
     "axis_left_x": 0,
     "axis_left_y": 1,
-    "btn_shoot": 11,
-    "btn_shoot_alt": 9,
-    "btn_shoot_more": (14, 13, 5),
-    "btn_emp": 10,
+    "btn_shoot": 14,
+    "btn_shoot_alt": 13,
+    "btn_shoot_more": (5, 9),
+    "btn_emp": 10,       # L1/LB
     "btn_emp_more": (8,),
+    "btn_fenda": 11,     # R1/RB
+    "btn_fenda_more": (),
     "btn_back": 0,
     "btn_start": 3,
 }
 
 _AXIS_TRIGGER_THRESHOLD = 0.5
-
 JoyRef = Optional[Any]
 
 
@@ -30,6 +33,7 @@ class PlayerInput:
     thrust: bool = False
     shoot: bool = False
     emp_pressed: bool = False
+    fenda_pressed: bool = False
     usando_joystick: bool = False
 
 
@@ -59,10 +63,7 @@ class InputManager:
         self._snapshot_joy_axes()
 
     def inputs_por_jogador(self, num_jogadores: int) -> list[PlayerInput]:
-        entradas: list[PlayerInput] = []
-        for i in range(num_jogadores):
-            entradas.append(self._input_jogador(i))
-        return entradas
+        return [self._input_jogador(i) for i in range(num_jogadores)]
 
     def joysticks_conectados(self) -> list[str]:
         return [joy.get_name() for joy in self._joysticks]
@@ -101,6 +102,7 @@ class InputManager:
         kb_up = bool(self._keys[ctrl["cima"]])
         kb_shoot = bool(self._keys[ctrl["fogo"]])
         kb_emp = bool(self._keys[ctrl["hiper"]]) and not bool(self._prev_keys[ctrl["hiper"]])
+        kb_fenda = bool(self._keys[ctrl["fenda"]]) and not bool(self._prev_keys[ctrl["fenda"]])
 
         return PlayerInput(
             rotate_left=kb_left or self._joy_left(joy),
@@ -108,6 +110,7 @@ class InputManager:
             thrust=kb_up or self._joy_up(joy),
             shoot=kb_shoot or self._joy_shoot(joy),
             emp_pressed=kb_emp or self._joy_emp_just_pressed(joy),
+            fenda_pressed=kb_fenda or self._joy_fenda_just_pressed(joy),
             usando_joystick=joy is not None,
         )
 
@@ -115,18 +118,21 @@ class InputManager:
         count = pg.joystick.get_count()
         if count == len(self._joysticks) and not self._joy_rescan_requested:
             return
+
         self._joy_rescan_requested = False
         for j in self._joysticks:
             try:
                 j.quit()
             except pg.error:
                 pass
+
         self._joysticks = []
         self._joy_profiles.clear()
         self._cur_joy_btns = {}
         self._prev_joy_btns = {}
         self._cur_joy_axes = {}
         self._prev_joy_axes = {}
+
         for i in range(count):
             try:
                 joy = pg.joystick.Joystick(i)
@@ -223,6 +229,14 @@ class InputManager:
             return True
         return False
 
+    def _joy_fenda_just_pressed(self, joy: JoyRef) -> bool:
+        if joy is None:
+            return False
+        for bid in self._profile_fenda_buttons(joy):
+            if self._btn_just_pressed(joy, bid):
+                return True
+        return False
+
     def _profile_value(self, joy: JoyRef, key: str, fallback: int) -> int:
         if joy is None:
             return fallback
@@ -256,6 +270,19 @@ class InputManager:
             out = [C.JOY_BTN_EMP]
         return tuple(out)
 
+    def _profile_fenda_buttons(self, joy: Any) -> tuple[int, ...]:
+        p = self._joy_profiles.get(joy.get_instance_id(), {})
+        out: list[int] = []
+        v = p.get("btn_fenda")
+        if isinstance(v, int):
+            out.append(v)
+        extra = p.get("btn_fenda_more")
+        if isinstance(extra, tuple):
+            out.extend(cast(tuple[int, ...], extra))
+        if not out:
+            out = [C.JOY_BTN_FENDA]
+        return tuple(out)
+
     def _resolver_profile(self, nome: str) -> dict[str, Any]:
         n = nome.lower()
 
@@ -263,10 +290,11 @@ class InputManager:
             return {
                 "axis_left_x": 0,
                 "axis_left_y": 1,
-                "btn_shoot": 5,
+                "btn_shoot": 0,
                 "btn_shoot_alt": 7,
-                "btn_shoot_more": (0, 1, 2, 3),
-                "btn_emp": 4,
+                "btn_shoot_more": (1, 2, 3),
+                "btn_emp": 4,       # LB
+                "btn_fenda": 5,     # RB
                 "btn_back": 6,
                 "btn_start": 7,
                 "axis_r2": 5,
@@ -298,11 +326,12 @@ class InputManager:
             return {
                 "axis_left_x": 0,
                 "axis_left_y": 1,
-                "btn_shoot": 5,
-                "btn_shoot_alt": 7,
-                "btn_shoot_more": (0, 1, 2, 3),
-                "btn_emp": 4,
+                "btn_shoot": 0,     # Cross/X
+                "btn_shoot_alt": 7, # Options como fallback de seleção
+                "btn_shoot_more": (1, 2, 3),
+                "btn_emp": 4,       # L1
                 "btn_emp_more": (6,),
+                "btn_fenda": 5,     # R1
                 "btn_back": 8,
                 "btn_start": 9,
                 "axis_r2": 5,
@@ -315,6 +344,7 @@ class InputManager:
             "btn_shoot": C.JOY_BTN_SHOOT,
             "btn_shoot_alt": C.JOY_BTN_SHOOT_ALT,
             "btn_emp": C.JOY_BTN_EMP,
+            "btn_fenda": C.JOY_BTN_FENDA,
             "btn_back": C.JOY_BTN_BACK,
             "btn_start": C.JOY_BTN_START,
         }

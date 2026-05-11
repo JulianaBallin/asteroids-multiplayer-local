@@ -1,17 +1,19 @@
 import math
 from random import uniform
+
 import pygame as pg
+
 import config as C
 from utils import Vec, ang_vec, envolver, circulo
 
 
 class Bala(pg.sprite.Sprite):
-    # Projétil disparado pela nave de um jogador
+    # Projétil disparado pela nave de um jogador.
     def __init__(self, pos: Vec, vel: Vec, dono: int):
         super().__init__()
         self.pos = Vec(pos)
         self.vel = Vec(vel)
-        self.dono = dono   # índice do jogador dono da bala
+        self.dono = dono
         self.ttl = C.TTL_BALA
         self.r = C.RAIO_BALA
         self.rect = pg.Rect(0, 0, 4, 4)
@@ -29,7 +31,7 @@ class Bala(pg.sprite.Sprite):
 
 
 class BalaOVNI(pg.sprite.Sprite):
-    # Projétil disparado pelo OVNI inimigo
+    # Projétil disparado pelo OVNI inimigo.
     def __init__(self, pos: Vec, vel: Vec):
         super().__init__()
         self.pos = Vec(pos)
@@ -59,6 +61,7 @@ class PulsoEMP(pg.sprite.Sprite):
         self.r_ant = 0.0
         self.ast_na_frente: set[int] = set()
         self.naves_na_frente: set[int] = set()
+        self.ovnis_na_frente: set[int] = set()
         self.rect = pg.Rect(0, 0, int(C.EMP_RAIO_MAX * 2) + 8, int(C.EMP_RAIO_MAX * 2) + 8)
 
     def ancorar(self, pos: Vec):
@@ -75,40 +78,36 @@ class PulsoEMP(pg.sprite.Sprite):
         if self.r < 3.0:
             return
         ro = max(4, int(self.r))
-        pos = self.pos
         if ro < 22:
-            pg.draw.circle(surf, C.EMP_COR_FLASH, (int(pos.x), int(pos.y)), 22)
+            pg.draw.circle(surf, C.EMP_COR_FLASH, (int(self.pos.x), int(self.pos.y)), 22)
         circulo(surf, self.pos, ro, C.EMP_COR_ANEL_A, esp=4)
         if ro >= 8:
             circulo(surf, self.pos, ro - 6, C.EMP_COR_ANEL_B, esp=2)
         if ro >= 14:
             circulo(surf, self.pos, ro - 12, C.EMP_COR_FLASH, esp=1)
 
-class RastroGravitacional(pg.sprite.Sprite):
-    # Partícula deixada pela nave ao acelerar.
-    # Ela permanece no espaço por pouco tempo e cria uma pequena área de interferência.
+
+class FendaGravitacional(pg.sprite.Sprite):
+    # Fragmento temporário da fenda criada pelo dash gravitacional.
+    # Cada fragmento interfere em objetos que encostam nele.
     def __init__(self, pos: Vec, dono_id: int, angulo: float):
         super().__init__()
         self.pos = Vec(pos)
         self.dono_id = dono_id
         self.angulo = angulo
-        self.ttl = C.RASTRO_TTL
-        self.tempo_total = C.RASTRO_TTL
-        self.r = C.RASTRO_RAIO_VISUAL
-        self.rect = pg.Rect(
-            0,
-            0,
-            C.RASTRO_RAIO_INFLUENCIA * 2,
-            C.RASTRO_RAIO_INFLUENCIA * 2
-        )
+        self.ttl = C.FENDA_TTL
+        self.tempo_total = C.FENDA_TTL
+        self.r = C.FENDA_RAIO
+        self.asteroides_atingidos: set[int] = set()
+        self.naves_atingidas: set[int] = set()
+        self.ovnis_atingidos: set[int] = set()
+        self.rect = pg.Rect(0, 0, self.r * 2, self.r * 2)
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def update(self, dt: float):
         self.ttl -= dt
-
         if self.ttl <= 0:
             self.kill()
-
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def intensidade(self) -> float:
@@ -116,15 +115,17 @@ class RastroGravitacional(pg.sprite.Sprite):
 
     def draw(self, surf: pg.Surface):
         intensidade = self.intensidade()
-
         if intensidade <= 0:
             return
 
-        raio_externo = max(2, int(C.RASTRO_RAIO_INFLUENCIA * 0.22 * intensidade))
-        raio_interno = max(1, int(C.RASTRO_RAIO_VISUAL * intensidade))
+        raio_externo = max(3, int(self.r * intensidade))
+        raio_interno = max(2, int(self.r * 0.55 * intensidade))
+        raio_nucleo = max(1, int(self.r * 0.18 * intensidade))
 
-        circulo(surf, self.pos, raio_externo, C.RASTRO_COR_EXTERNA, esp=1)
-        circulo(surf, self.pos, raio_interno, C.RASTRO_COR_INTERNA, esp=2)
+        circulo(surf, self.pos, raio_externo, C.FENDA_COR_EXTERNA, esp=2)
+        circulo(surf, self.pos, raio_interno, C.FENDA_COR_INTERNA, esp=1)
+        circulo(surf, self.pos, raio_nucleo, C.FENDA_COR_NUCLEO, esp=2)
+
 
 class Asteroide(pg.sprite.Sprite):
     def __init__(self, pos: Vec, vel: Vec, tamanho: str):
@@ -137,7 +138,6 @@ class Asteroide(pg.sprite.Sprite):
         self.rect = pg.Rect(0, 0, self.r * 2, self.r * 2)
 
     def _gerar_forma(self):
-        # Polígono irregular com variação aleatória nos vértices
         n = 12 if self.tamanho == "G" else 10 if self.tamanho == "M" else 8
         pts = []
         for i in range(n):
@@ -149,6 +149,7 @@ class Asteroide(pg.sprite.Sprite):
     def update(self, dt: float):
         self.pos += self.vel * dt
         self.pos = envolver(self.pos)
+
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def draw(self, surf: pg.Surface):
@@ -156,7 +157,7 @@ class Asteroide(pg.sprite.Sprite):
 
 
 class Carcaca(pg.sprite.Sprite):
-    # Destroços da nave de um jogador eliminado — pode ser resgatada por aliados
+    # Destroços da nave de um jogador eliminado — pode ser resgatada por aliados.
     def __init__(self, pos: Vec, angulo: float, jogador_id: int):
         super().__init__()
         self.pos = Vec(pos)
@@ -164,7 +165,7 @@ class Carcaca(pg.sprite.Sprite):
         self.jogador_id = jogador_id
         self.cor = C.CORES_JOGADORES[jogador_id]
         self.ttl = C.TTL_CARCACA
-        self.progresso = 0.0   # 0.0 a 1.0 — preenchido pelo Mundo durante o resgate
+        self.progresso = 0.0
         self.r = C.RAIO_NAVE
         self.rect = pg.Rect(0, 0, self.r * 2, self.r * 2)
 
@@ -175,7 +176,6 @@ class Carcaca(pg.sprite.Sprite):
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def draw(self, surf: pg.Surface):
-        # Pisca lentamente para indicar que está disponível para resgate
         if int(self.ttl * 3) % 2 == 0:
             d = ang_vec(self.angulo)
             p1 = self.pos + d * self.r
@@ -183,7 +183,6 @@ class Carcaca(pg.sprite.Sprite):
             p3 = self.pos + ang_vec(self.angulo - 140) * self.r * 0.9
             pg.draw.polygon(surf, self.cor, [p1, p2, p3], width=1)
 
-        # Barra de progresso do resgate acima da carcaça
         if self.progresso > 0:
             bx = int(self.pos.x) - 25
             by = int(self.pos.y) - self.r - 14
@@ -229,25 +228,28 @@ class Nave(pg.sprite.Sprite):
     def update(self, dt: float):
         if not self.ativa:
             return
+
         if self.cooldown_tiro > 0:
             self.cooldown_tiro -= dt
         if self.invuln > 0:
             self.invuln -= dt
         if self.emp_jam > 0:
             self.emp_jam = max(0.0, self.emp_jam - dt)
+
         self.pos += self.vel * dt
+        self.vel *= C.FRICCAO
         self.pos = envolver(self.pos)
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def draw(self, surf: pg.Surface):
         if not self.ativa:
             return
+
         d = ang_vec(self.angulo)
         p1 = self.pos + d * self.r
         p2 = self.pos + ang_vec(self.angulo + 140) * self.r * 0.9
         p3 = self.pos + ang_vec(self.angulo - 140) * self.r * 0.9
 
-        # Anel piscante durante invulnerabilidade
         if self.invuln > 0 and int(self.invuln * 10) % 2 == 0:
             circulo(surf, self.pos, self.r + 6, self.cor)
         if self.emp_jam > 0 and int(self.emp_jam * 8) % 2 == 0:
@@ -274,7 +276,6 @@ class OVNI(pg.sprite.Sprite):
         self.cooldown -= dt
         if self.emp_jam > 0:
             self.emp_jam = max(0.0, self.emp_jam - dt)
-        # Sai da tela → se destrói
         if self.pos.x < -self.r * 2 or self.pos.x > C.LARGURA + self.r * 2:
             self.kill()
         self.rect.center = (int(self.pos.x), int(self.pos.y))
@@ -282,12 +283,13 @@ class OVNI(pg.sprite.Sprite):
     def atirar_em(self, alvo: Vec) -> 'BalaOVNI | None':
         if self.cooldown > 0 or self.emp_jam > 0:
             return None
+
         d = Vec(alvo) - self.pos
         if d.length_squared() == 0:
             d = Vec(self.direcao)
         else:
             d = d.normalize()
-        # Adiciona erro de mira proporcional à dificuldade
+
         d = d.rotate(uniform(-(1 - self.mira) * 60, (1 - self.mira) * 60))
         self.cooldown = C.INTERVALO_TIRO_OVNI
         return BalaOVNI(self.pos + d * (self.r + 6), d * C.VEL_BALA_OVNI)
@@ -296,7 +298,5 @@ class OVNI(pg.sprite.Sprite):
         w, h = self.r * 2, self.r
         if self.emp_jam > 0 and int(self.emp_jam * 8) % 2 == 0:
             circulo(surf, self.pos, self.r + 4, C.EMP_COR_JAM)
-        pg.draw.ellipse(surf, C.BRANCO,
-                        (int(self.pos.x - w / 2), int(self.pos.y - h / 2), w, h), width=1)
-        pg.draw.ellipse(surf, C.BRANCO,
-                        (int(self.pos.x - w / 4), int(self.pos.y - h), w // 2, int(h * 0.7)), width=1)
+        pg.draw.ellipse(surf, C.BRANCO, (int(self.pos.x - w / 2), int(self.pos.y - h / 2), w, h), width=1)
+        pg.draw.ellipse(surf, C.BRANCO, (int(self.pos.x - w / 4), int(self.pos.y - h), w // 2, int(h * 0.7)), width=1)

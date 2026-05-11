@@ -18,23 +18,19 @@ CORES_JOGADORES = [
 
 # Posições de spawn iniciais por jogador
 POSICOES_SPAWN = [
-    (320, 384),   # J1: esquerda (25% da largura)
-    (960, 384),   # J2: direita  (75% da largura)
-    (640, 230),   # J3: topo     (centro, acima)
-    (640, 560),   # J4: baixo    (centro, abaixo)
+    (320, 384),   # J1: esquerda
+    (960, 384),   # J2: direita
+    (640, 230),   # J3: topo
+    (640, 560),   # J4: baixo
 ]
 
-# Controles Tectoy por jogador
-# Ordem: esquerda, direita, cima, fogo, hiper (Pulsar EMP)
+# Controles por jogador
+# Ordem: esquerda, direita, cima, fogo, hiper (Pulsar EMP), fenda (dash gravitacional)
 CONTROLES = [
-    # J1: WASD
-    {'esq': pg.K_a, 'dir': pg.K_d, 'cima': pg.K_w, 'fogo': pg.K_LSHIFT, 'hiper': pg.K_q},
-    # J2: setas do teclado
-    {'esq': pg.K_LEFT, 'dir': pg.K_RIGHT, 'cima': pg.K_UP, 'fogo': pg.K_RSHIFT, 'hiper': pg.K_p},
-    # J3: IJKL
-    {'esq': pg.K_j, 'dir': pg.K_l, 'cima': pg.K_i, 'fogo': pg.K_h, 'hiper': pg.K_y},
-    # J4: teclado numérico
-    {'esq': pg.K_KP4, 'dir': pg.K_KP6, 'cima': pg.K_KP8, 'fogo': pg.K_KP0, 'hiper': pg.K_KP_ENTER},
+    {'esq': pg.K_a, 'dir': pg.K_d, 'cima': pg.K_w, 'fogo': pg.K_LSHIFT, 'hiper': pg.K_q, 'fenda': pg.K_e},
+    {'esq': pg.K_LEFT, 'dir': pg.K_RIGHT, 'cima': pg.K_UP, 'fogo': pg.K_RSHIFT, 'hiper': pg.K_p, 'fenda': pg.K_o},
+    {'esq': pg.K_j, 'dir': pg.K_l, 'cima': pg.K_i, 'fogo': pg.K_h, 'hiper': pg.K_y, 'fenda': pg.K_u},
+    {'esq': pg.K_KP4, 'dir': pg.K_KP6, 'cima': pg.K_KP8, 'fogo': pg.K_KP0, 'hiper': pg.K_KP_ENTER, 'fenda': pg.K_KP9},
 ]
 
 # Nave
@@ -49,13 +45,13 @@ TAXA_TIRO = 0.2
 VEL_BALA = 420.0
 MAX_BALAS_POR_JOGADOR = 4
 
-# Pulsar EMP (mesma tecla que o antigo HIPER)
+# Pulsar EMP
 EMP_RAIO_MAX = 220.0
 EMP_VEL_EXPANSAO = 480.0
 EMP_HIT_BAND = 20.0
 EMP_COOLDOWN = 7.0
-EMP_COR_ANEL_A = (190, 120, 255)   # roxo elétrico externo
-EMP_COR_ANEL_B = (130, 60, 255)    # roxo médio
+EMP_COR_ANEL_A = (190, 120, 255)
+EMP_COR_ANEL_B = (130, 60, 255)
 EMP_COR_FLASH = (230, 190, 255)
 EMP_COR_JAM = (255, 80, 40)
 EMP_AST_IMPULSO = 380.0
@@ -90,39 +86,48 @@ BRANCO = (240, 240, 240)
 CINZA = (80, 80, 80)
 CINZA_CLARO = (160, 160, 160)
 PRETO = (0, 0, 0)
-
 DURACAO_FADE = 1.5
 
-# Modos de jogo disponíveis
+
 class Modo:
-    SOLO            = "solo"
-    COOPERATIVO     = "cooperativo"
-    DUELO           = "duelo"
+    SOLO = "solo"
+    COOPERATIVO = "cooperativo"
+    DUELO = "duelo"
     TODOS_CONTRA_TODOS = "ffa"
-    EQUIPES         = "equipes"
+    EQUIPES = "equipes"
+
 
 # Mecânica de resgate — jogador morto pode ser revivido por aliado próximo
-ALCANCE_RESGATE = 80      # distância máxima em pixels para iniciar o resgate
-DURACAO_RESGATE = 3.0     # segundos necessários para completar o resgate
-TTL_CARCACA = 10.0        # tempo que a carcaça permanece disponível no mapa
-COR_RESGATE = (0, 255, 120)  # cor da barra de progresso de resgate
+ALCANCE_RESGATE = 80
+DURACAO_RESGATE = 3.0
+TTL_CARCACA = 10.0
+COR_RESGATE = (0, 255, 120)
 
-# Rastro Gravitacional
-RASTRO_INTERVALO = 0.06
-RASTRO_TTL = 2.4
-RASTRO_RAIO_VISUAL = 7
-RASTRO_RAIO_INFLUENCIA = 110
-RASTRO_FORCA_ASTEROIDE = 220.0
-RASTRO_FORCA_BALA = 320.0
-RASTRO_FORCA_NAVE = 150.0
-RASTRO_COR_EXTERNA = (120, 80, 255)
-RASTRO_COR_INTERNA = (80, 210, 255)
+# Fenda Gravitacional
+# Habilidade ativa com botão próprio.
+# A nave avança rapidamente e deixa uma fenda temporária no caminho.
+# A fenda destrói projéteis, corta asteroides pequenos e desestabiliza inimigos.
+FENDA_COOLDOWN = 4.5
+FENDA_DASH_DIST = 170.0
+FENDA_IMPULSO_EXTRA = 120.0
+FENDA_INVULN = 0.45
+FENDA_TTL = 0.75
+FENDA_RAIO = 36
+FENDA_SEGMENTOS = 7
+FENDA_AST_IMPULSO = 340.0
+FENDA_JAM_SEG = 1.3
+FENDA_BONUS_ASTEROIDE_PEQUENO = 60
+FENDA_COR_EXTERNA = (120, 80, 255)
+FENDA_COR_INTERNA = (80, 210, 255)
+FENDA_COR_NUCLEO = (230, 245, 255)
+
 # Joystick
 JOY_AXIS_LEFT_X = 0
 JOY_AXIS_LEFT_Y = 1
-JOY_BTN_SHOOT = 7     # R2/RT (digital) em mapeamento comum
-JOY_BTN_SHOOT_ALT = 5 # R1/RB fallback
-JOY_BTN_EMP = 4       # L1/LB
-JOY_BTN_BACK = 8      # Select/Back
-JOY_BTN_START = 9     # Start/Menu
+JOY_BTN_SHOOT = 7       # R2/RT digital em mapeamento comum
+JOY_BTN_SHOOT_ALT = 0   # botão frontal/A/Cross fallback
+JOY_BTN_EMP = 4         # L1/LB
+JOY_BTN_FENDA = 5       # R1/RB
+JOY_BTN_BACK = 8        # Select/Back
+JOY_BTN_START = 9       # Start/Menu
 JOY_DEADZONE = 0.25

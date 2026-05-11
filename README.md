@@ -4,7 +4,7 @@
 
 <p align="center">
   Versão multiplayer local do clássico Asteroids para até <strong>4 jogadores simultâneos</strong>,<br>
-  com controles Tectoy, modos de jogo variados e mecânicas inéditas por integrante da equipe.<br>
+  com suporte a teclado e controles, modos de jogo variados e mecânicas inéditas por integrante da equipe.<br>
   <em>Atividade 007 | UEA · Tópicos Especiais I</em>
 </p>
 
@@ -25,7 +25,7 @@
 
 Este projeto é uma versão **multiplayer local** do jogo Asteroids, baseada no repositório original do professor [jucimarjr/asteroids_pygame](https://github.com/jucimarjr/asteroids_pygame).
 
-O objetivo é transformar o jogo singleplayer em uma experiência divertida para **2 a 4 jogadores simultâneos**, com controles mapeados para os controles Tectoy disponibilizados em sala, interface adaptada para múltiplos jogadores e mecânicas inéditas desenvolvidas por cada integrante da equipe.
+O objetivo é transformar o jogo singleplayer em uma experiência divertida para **2 a 4 jogadores simultâneos**, com controles adaptados para teclado e joystick, interface própria para múltiplos jogadores e mecânicas inéditas desenvolvidas por cada integrante da equipe.
 
 ---
 
@@ -73,10 +73,11 @@ Os jogadores são divididos em duas equipes fixas: **Equipe A** (J1 e J2) contra
 | **Cores por jogador** | Ciano (J1), Amarelo (J2), Verde (J3), Vermelho (J4) |
 | **Pontuação individual** | Cada jogador acumula pontos separadamente |
 | **Vidas individuais** | Cada nave tem 3 vidas independentes |
-| **HUD dividido** | Topo da tela dividido em seções por jogador, com vidas, pontos e estado do EMP |
+| **HUD dividido** | Topo da tela dividido em seções por jogador, com vidas, pontos e estado das habilidades |
 | **Placar final** | Ranking por pontos ao encerrar a partida |
 | **OVNI inteligente** | Mira automaticamente na nave viva mais próxima |
 | **Fogo amigo** | Ativo nos modos competitivos (Duelo, Todos vs Todos, Equipes) |
+| **Suporte a joystick** | Leitura de controles via Pygame, com perfis para Xbox, PlayStation e controles genéricos |
 
 ---
 
@@ -92,13 +93,13 @@ Quando um jogador perde todas as suas vidas nos modos Cooperativo ou Equipes, su
 
 <br>
 
-**Ana Beatriz Maciel Nunes**
+**Ana Beatriz Maciel Nunes - Fenda Gravitacional**
 
-Ana Beatriz Maciel Nunes - Rastro Gravitacional
+A Fenda Gravitacional é uma habilidade ativa de mobilidade e controle de mapa. Ao ser ativada, a nave realiza um **dash curto** na direção em que está apontando e deixa uma fenda temporária no caminho percorrido.
 
-O Rastro Gravitacional transforma o movimento da nave em uma mecânica estratégica. Sempre que o jogador acelera, a nave deixa pequenas partículas de energia no espaço por alguns segundos. Essas partículas criam uma área de interferência que altera levemente a trajetória de objetos próximos.
+A fenda permanece ativa por alguns segundos e interfere em objetos que atravessam sua área. Projéteis do OVNI são destruídos ao encostar na fenda. Em modos competitivos, projéteis de jogadores inimigos também podem ser neutralizados. Asteroides pequenos podem ser cortados pela fenda, enquanto asteroides médios e grandes são empurrados, abrindo rotas de fuga e criando oportunidades estratégicas durante a partida.
 
-Asteroides e projéteis que passam pelo rastro sofrem um pequeno desvio, criando a sensação de curvatura espacial. Em modos competitivos, naves e balas inimigas também podem ser afetadas, permitindo que o jogador use o próprio deslocamento para controlar espaço, atrapalhar adversários e criar rotas defensivas.
+A mecânica funciona como uma habilidade de reposicionamento: o jogador pode usar a Fenda para escapar de situações perigosas, atravessar espaços fechados, bloquear tiros e desorganizar ameaças próximas.
 
 <br>
 
@@ -110,16 +111,37 @@ Asteroides atingidos pelo pulso recebem um impulso de repulsão, alterando sua t
 
 ---
 
-<h2 align="center">🎮 Controles (Tectoy)</h2>
+<h2 align="center">🎮 Controles</h2>
 
-| Jogador | Esquerda | Direita | Acelerar | Fogo | Pulsar EMP |
-|---|---|---|---|---|---|
-| **J1** | `A` | `D` | `W` | `LSHIFT` | `Q` |
-| **J2** | `←` | `→` | `↑` | `RSHIFT` | `P` |
-| **J3** | `J` | `L` | `I` | `H` | `Y` |
-| **J4** | `Num4` | `Num6` | `Num8` | `Num0` | `NumEnter` |
+<h3>Teclado</h3>
 
-> **Pulsar EMP:** mesmas teclas de antes, espera antes de repetir; empurra asteroides. Outra nave no alcance da onda: mesmo time/coop ganha invulnerabilidade curta; duel, todos-vs-todos ou equipa adversária ficam com rotação mais lenta uns segundos. Quem dispara não leva esse “lerdo”.
+| Jogador | Esquerda | Direita | Acelerar | Fogo | Pulsar EMP | Fenda Gravitacional |
+|---|---|---|---|---|---|---|
+| **J1** | `A` | `D` | `W` | `LSHIFT` | `Q` | `E` |
+| **J2** | `←` | `→` | `↑` | `RSHIFT` | `P` | `O` |
+| **J3** | `J` | `L` | `I` | `H` | `Y` | `U` |
+| **J4** | `Num4` | `Num6` | `Num8` | `Num0` | `NumEnter` | `Num9` |
+
+> **Pulsar EMP:** habilidade em área ao redor da nave. Empurra asteroides, concede invulnerabilidade temporária a aliados em modos cooperativos e reduz a rotação de inimigos em modos competitivos.
+
+> **Fenda Gravitacional:** habilidade de dash em linha. A nave avança rapidamente e deixa uma fenda temporária no trajeto, capaz de neutralizar projéteis e interferir em asteroides.
+
+<h3>Joystick / Controle</h3>
+
+O jogo possui suporte a controles reconhecidos pelo Pygame, incluindo perfis para controles Xbox, PlayStation e modelos genéricos.
+
+Mapeamento esperado para controles PlayStation/Xbox:
+
+| Ação | PlayStation | Xbox |
+|---|---|---|
+| Movimento | Analógico esquerdo ou D-pad | Analógico esquerdo ou D-pad |
+| Fogo | `X` | `A` |
+| Pulsar EMP | Botão superior esquerdo / `L1`* | `LB` |
+| Fenda Gravitacional | Botão superior direito / `R1`* | `RB` |
+| Confirmar / Start | `Options`* | `Start` |
+| Voltar | `Share`* | `Back` |
+
+\* Em controles PlayStation, o mapeamento pode variar conforme o modelo do controle, conexão USB/Bluetooth, driver do sistema operacional e forma como o Pygame reconhece o dispositivo. Por isso, em alguns controles PS4/PS5, os botões de EMP, Fenda, Start e Voltar podem aparecer em posições diferentes.
 
 ---
 
@@ -130,10 +152,11 @@ asteroids-multiplayer-local/
 ├── src/
 │   ├── main.py        # ponto de entrada
 │   ├── config.py      # constantes, cores e controles por jogador
+│   ├── input.py       # leitura de teclado e joystick
 │   ├── game.py        # loop, menus, HUD e placar
 │   ├── sprites.py     # entidades: Nave, Bala, Asteroide, OVNI, Carcaca
-│   ├── systems.py     # gerenciador do mundo e logica dos modos de jogo
-│   └── utils.py       # funções matematicas e de desenho
+│   ├── systems.py     # gerenciador do mundo e lógica dos modos de jogo
+│   └── utils.py       # funções matemáticas e de desenho
 ├── docs/
 │   └── diagrams/
 │       ├── logo.svg
@@ -191,19 +214,20 @@ Os diagramas estão na pasta `docs/diagrams/` em formato PlantUML (`.puml`).
 
 Para renderizá-los, use o [PlantUML Online Server](https://www.plantuml.com/plantuml/uml/) ou o plugin PlantUML no VS Code.
 
-| Arquivo | Nivel | Descricao |
+| Arquivo | Nível | Descrição |
 |---|---|---|
-| `c4_nivel1_contexto.puml` | Nivel 1 | Visao geral do sistema e usuarios |
-| `c4_nivel2_container.puml` | Nivel 2 | Containers da aplicacao |
-| `c4_nivel3_componente.puml` | Nivel 3 | Componentes internos da aplicacao |
+| `c4_nivel1_contexto.puml` | Nível 1 | Visão geral do sistema e usuários |
+| `c4_nivel2_container.puml` | Nível 2 | Containers da aplicação |
+| `c4_nivel3_componente.puml` | Nível 3 | Componentes internos da aplicação |
 
 ---
 
 <h2 align="center">⚠️ Limitações</h2>
 
-- Suporte apenas a teclado (sem joystick USB nesta versão)
-- Ate 4 jogadores simultâneos no mesmo teclado
-- Jogo reinicia do zero a cada partida (sem salvamento de pontuação)
+- Até 4 jogadores simultâneos na mesma máquina
+- O mapeamento de botões pode variar entre controles PS4, PS5, Xbox e controles genéricos, dependendo do driver e da conexão
+- O jogo reinicia do zero a cada partida, sem salvamento persistente de pontuação
+- Não há multiplayer online; a experiência é exclusivamente multiplayer local
 
 ---
 

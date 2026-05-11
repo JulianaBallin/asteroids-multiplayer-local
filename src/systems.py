@@ -1,8 +1,10 @@
 from random import uniform
+
 import pygame as pg
+
 import config as C
 from config import Modo
-from sprites import Asteroide, BalaOVNI, Carcaca, Nave, OVNI, PulsoEMP, RastroGravitacional
+from sprites import Asteroide, BalaOVNI, Carcaca, Nave, OVNI, PulsoEMP, FendaGravitacional
 from utils import Vec, borda_aleatoria, vec_aleatorio
 
 
@@ -10,14 +12,12 @@ class Mundo:
     def __init__(self, num_jogadores: int, modo: str):
         self.num_jogadores = num_jogadores
         self.modo = modo
-        self.msg_vitoria = ""  # preenchida quando fim_de_jogo for True
+        self.msg_vitoria = ""
 
-        # Cria as naves nas posições de spawn
         self.naves: list[Nave] = []
         for i in range(num_jogadores):
             self.naves.append(Nave(Vec(*C.POSICOES_SPAWN[i]), i))
 
-        # Grupo de balas separado por jogador para rastrear pontuação
         self.balas: list[pg.sprite.Group] = [pg.sprite.Group() for _ in range(num_jogadores)]
         self.balas_ovni = pg.sprite.Group()
         self.asteroides = pg.sprite.Group()
@@ -25,47 +25,41 @@ class Mundo:
         self.carcacas = pg.sprite.Group()
         self.pulsos_emp = pg.sprite.Group()
         self.cooldown_emp = [0.0] * C.MAX_JOGADORES
-        self.rastros_grav = pg.sprite.Group()
-        self.cooldown_rastro = [0.0] * C.MAX_JOGADORES
 
-        # Rastreia quanto tempo cada nave fica próxima de cada carcaça
-        # estrutura: {id(carcaca): {jogador_id: segundos_acumulados}}
+        self.fendas_grav = pg.sprite.Group()
+        self.cooldown_fenda = [0.0] * C.MAX_JOGADORES
+
         self.tempos_resgate: dict[int, dict[int, float]] = {}
-
         self.onda = 0
         self.cool_onda = C.ATRASO_ONDA
         self.timer_ovni = C.INTERVALO_OVNI
         self.fim_de_jogo = False
 
     # --- consultas de estado ---
-
     def naves_vivas(self) -> list[Nave]:
         return [n for n in self.naves if n.ativa]
 
     def _sao_aliados(self, id_a: int, id_b: int) -> bool:
-        # Solo e cooperativo: todos são aliados entre si
         if self.modo in (Modo.SOLO, Modo.COOPERATIVO):
             return True
-        # Equipes: J1+J2 formam equipe 0, J3+J4 formam equipe 1
         if self.modo == Modo.EQUIPES:
             return (id_a // 2) == (id_b // 2)
-        # Duelo e todos-contra-todos: ninguém é aliado
         return False
 
     # --- criação de entidades ---
-
     def _criar_asteroide(self, pos: Vec, vel: Vec, tamanho: str):
         self.asteroides.add(Asteroide(pos, vel, tamanho))
 
     def _criar_ovni(self):
         if self.ovnis:
             return
+
         pequeno = uniform(0, 1) < 0.5
         y = uniform(0, C.ALTURA)
         x = 0 if uniform(0, 1) < 0.5 else C.LARGURA
-        o = OVNI(Vec(x, y), pequeno)
-        o.direcao = Vec(1, 0) if x == 0 else Vec(-1, 0)
-        self.ovnis.add(o)
+        ovni = OVNI(Vec(x, y), pequeno)
+        ovni.direcao = Vec(1, 0) if x == 0 else Vec(-1, 0)
+        self.ovnis.add(ovni)
 
     def iniciar_onda(self):
         self.onda += 1
@@ -75,16 +69,16 @@ class Mundo:
             self._criar_asteroide(pos, vel, "G")
 
     # --- ações dos jogadores ---
-
     def tentar_atirar(self, jogador_id: int):
         nave = self.naves[jogador_id]
         if not nave.ativa:
             return
         if len(self.balas[jogador_id]) >= C.MAX_BALAS_POR_JOGADOR:
             return
-        b = nave.atirar()
-        if b:
-            self.balas[jogador_id].add(b)
+
+        bala = nave.atirar()
+        if bala:
+            self.balas[jogador_id].add(bala)
 
     def tentar_emp(self, jogador_id: int):
         nave = self.naves[jogador_id]
@@ -92,9 +86,11 @@ class Mundo:
             return
         if self.cooldown_emp[jogador_id] > 0:
             return
+
         self.pulsos_emp.add(PulsoEMP(Vec(nave.pos), jogador_id))
         self.cooldown_emp[jogador_id] = C.EMP_COOLDOWN
 
+    # --- Pulsar EMP ---
     def _emp_contra_ast(self):
         for pulso in list(self.pulsos_emp):
             lim = pulso.r + C.EMP_HIT_BAND
@@ -102,12 +98,14 @@ class Mundo:
                 aid = id(ast)
                 if aid in pulso.ast_na_frente:
                     continue
+
                 delta = ast.pos - pulso.pos
                 dist = delta.length()
                 if dist < 1.5:
                     continue
                 if not (pulso.r_ant < dist <= lim):
                     continue
+
                 ast.vel += delta.normalize() * C.EMP_AST_IMPULSO
                 pulso.ast_na_frente.add(aid)
 
@@ -117,151 +115,173 @@ class Mundo:
             for nave in self.naves:
                 if not nave.ativa:
                     continue
+
                 jid = nave.jogador_id
                 if jid == pulso.dono_id:
                     continue
                 if jid in pulso.naves_na_frente:
                     continue
+
                 delta = nave.pos - pulso.pos
                 dist = delta.length()
                 if dist < 1.5:
                     continue
                 if not (pulso.r_ant < dist <= lim):
                     continue
+
                 pulso.naves_na_frente.add(jid)
                 if self._sao_aliados(pulso.dono_id, jid):
                     nave.invuln = max(nave.invuln, C.EMP_INVULN_ALIADO)
                 else:
                     nave.emp_jam = max(nave.emp_jam, C.EMP_JAM_SEG)
-    
-    def _criar_rastro_se_necessario(self, nave: Nave, dt: float):
-        jid = nave.jogador_id
 
-        if self.cooldown_rastro[jid] > 0:
-            self.cooldown_rastro[jid] = max(0.0, self.cooldown_rastro[jid] - dt)
-
-        if not nave.acelerando:
-            return
-
-        if self.cooldown_rastro[jid] > 0:
-            return
-
-        # Cria o rastro um pouco atrás da nave, para parecer que saiu do motor
-        pos_rastro = nave.pos - nave.vel.normalize() * 8 if nave.vel.length_squared() > 0 else Vec(nave.pos)
-        self.rastros_grav.add(RastroGravitacional(pos_rastro, jid, nave.angulo))
-        self.cooldown_rastro[jid] = C.RASTRO_INTERVALO
-
-
-    def _forca_gravitacional(self, pos_obj: Vec, rastro: RastroGravitacional, forca_base: float, dt: float) -> Vec:
-        delta = pos_obj - rastro.pos
-        dist = delta.length()
-
-        if dist <= 1 or dist > C.RASTRO_RAIO_INFLUENCIA:
-            return Vec(0, 0)
-
-        intensidade_dist = 1.0 - (dist / C.RASTRO_RAIO_INFLUENCIA)
-        intensidade_total = intensidade_dist * rastro.intensidade()
-
-        # Empurra objetos para fora do rastro, criando uma distorção visível de trajetória
-        direcao = delta.normalize()
-
-        return direcao * forca_base * intensidade_total * dt
-
-
-    def _aplicar_rastros_gravitacionais(self, dt: float):
-        for rastro in list(self.rastros_grav):
-            # Asteroides sofrem leve curvatura ao atravessar o rastro
-            for ast in self.asteroides:
-                ast.vel += self._forca_gravitacional(
-                    ast.pos,
-                    rastro,
-                    C.RASTRO_FORCA_ASTEROIDE,
-                    dt
-                )
-
-            # Balas do OVNI são desviadas com um pouco mais de força
-            for bala in self.balas_ovni:
-                bala.vel += self._forca_gravitacional(
-                    bala.pos,
-                    rastro,
-                    C.RASTRO_FORCA_BALA,
-                    dt
-                )
-
-            # Balas de jogadores adversários também podem ser desviadas em modos competitivos
-            for dono_bala, grupo in enumerate(self.balas):
-                if dono_bala == rastro.dono_id:
-                    continue
-
-                if self._sao_aliados(rastro.dono_id, dono_bala):
-                    continue
-
-                for bala in grupo:
-                    bala.vel += self._forca_gravitacional(
-                        bala.pos,
-                        rastro,
-                        C.RASTRO_FORCA_BALA,
-                        dt
-                    )
-
-            # Naves inimigas que passam pelo rastro sofrem leve desvio de movimento
-            for nave in self.naves_vivas():
-                if nave.jogador_id == rastro.dono_id:
-                    continue
-
-                if self._sao_aliados(rastro.dono_id, nave.jogador_id):
-                    continue
-
-                nave.vel += self._forca_gravitacional(
-                    nave.pos,
-                    rastro,
-                    C.RASTRO_FORCA_NAVE,
-                    dt
-                )
-
+    def _emp_contra_ovni(self):
+        for pulso in list(self.pulsos_emp):
+            lim = pulso.r + C.EMP_HIT_BAND
             for ovni in list(self.ovnis):
                 oid = id(ovni)
-                if oid in pulso.naves_na_frente:
+                if oid in pulso.ovnis_na_frente:
                     continue
+
                 delta = ovni.pos - pulso.pos
                 dist = delta.length()
                 if dist < 1.5:
                     continue
                 if not (pulso.r_ant < dist <= lim):
                     continue
-                pulso.naves_na_frente.add(oid)
+
+                pulso.ovnis_na_frente.add(oid)
                 ovni.emp_jam = max(ovni.emp_jam, C.EMP_JAM_SEG)
 
-    # --- loop principal ---
+    # --- Fenda Gravitacional ---
+    def tentar_fenda(self, jogador_id: int):
+        nave = self.naves[jogador_id]
+        if not nave.ativa:
+            return False
+        if self.cooldown_fenda[jogador_id] > 0:
+            return False
 
+        direcao = Vec(1, 0).rotate(nave.angulo)
+        inicio = Vec(nave.pos)
+        fim = inicio + direcao * C.FENDA_DASH_DIST
+
+        # Cria uma sequência de fragmentos entre a posição antiga e a nova,
+        # formando a fenda visível no caminho do dash.
+        total = max(1, C.FENDA_SEGMENTOS)
+        for i in range(total + 1):
+            t = i / total
+            pos = inicio + (fim - inicio) * t
+            self.fendas_grav.add(FendaGravitacional(pos, jogador_id, nave.angulo))
+
+        nave.pos = fim
+        nave.vel += direcao * C.FENDA_IMPULSO_EXTRA
+        nave.invuln = max(nave.invuln, C.FENDA_INVULN)
+        self.cooldown_fenda[jogador_id] = C.FENDA_COOLDOWN
+        return True
+
+    def _objeto_tocou_fenda(self, pos: Vec, raio: float, fenda: FendaGravitacional) -> bool:
+        return (pos - fenda.pos).length() <= fenda.r + raio
+
+    def _aplicar_fendas_gravitacionais(self, dt: float):
+        for fenda in list(self.fendas_grav):
+            dono = fenda.dono_id
+
+            # A fenda destrói tiros do OVNI.
+            for bala in list(self.balas_ovni):
+                if self._objeto_tocou_fenda(bala.pos, bala.r, fenda):
+                    bala.kill()
+
+            # Em modos competitivos, também destrói tiros de jogadores inimigos.
+            for dono_bala, grupo in enumerate(self.balas):
+                if dono_bala == dono:
+                    continue
+                if self._sao_aliados(dono, dono_bala):
+                    continue
+                for bala in list(grupo):
+                    if self._objeto_tocou_fenda(bala.pos, bala.r, fenda):
+                        bala.kill()
+
+            # Asteroides pequenos são cortados. Médios e grandes são empurrados.
+            for ast in list(self.asteroides):
+                aid = id(ast)
+                if aid in fenda.asteroides_atingidos:
+                    continue
+                if not self._objeto_tocou_fenda(ast.pos, ast.r, fenda):
+                    continue
+
+                fenda.asteroides_atingidos.add(aid)
+                if ast.tamanho == "P":
+                    if 0 <= dono < len(self.naves):
+                        self.naves[dono].pontos += (
+                            C.TAMANHOS_AST[ast.tamanho]["pontos"] + C.FENDA_BONUS_ASTEROIDE_PEQUENO
+                        )
+                    ast.kill()
+                else:
+                    delta = ast.pos - fenda.pos
+                    if delta.length_squared() > 0:
+                        ast.vel += delta.normalize() * C.FENDA_AST_IMPULSO
+
+            # OVNIs atravessados pela fenda ficam travados por pouco tempo.
+            for ovni in list(self.ovnis):
+                oid = id(ovni)
+                if oid in fenda.ovnis_atingidos:
+                    continue
+                if self._objeto_tocou_fenda(ovni.pos, ovni.r, fenda):
+                    fenda.ovnis_atingidos.add(oid)
+                    ovni.emp_jam = max(ovni.emp_jam, C.FENDA_JAM_SEG)
+
+            # Naves inimigas atingidas pela fenda perdem manobrabilidade por pouco tempo.
+            for nave in self.naves_vivas():
+                jid = nave.jogador_id
+                if jid == dono:
+                    continue
+                if self._sao_aliados(dono, jid):
+                    continue
+                if jid in fenda.naves_atingidas:
+                    continue
+                if self._objeto_tocou_fenda(nave.pos, nave.r, fenda):
+                    fenda.naves_atingidas.add(jid)
+                    nave.emp_jam = max(nave.emp_jam, C.FENDA_JAM_SEG)
+
+    # --- loop principal ---
     def update(self, dt: float, entradas):
         if self.fim_de_jogo:
             return
 
-        vivas = self.naves_vivas()
-
-        for nave in vivas:
+        for nave in self.naves_vivas():
             entrada = entradas[nave.jogador_id]
+            nave.acelerando = False
+
             nave.controlar(entrada, dt)
-            nave.update(dt)
-            if entrada.shoot:
-                self.tentar_atirar(nave.jogador_id)
+
+            if entrada.fenda_pressed:
+                self.tentar_fenda(nave.jogador_id)
             if entrada.emp_pressed:
                 self.tentar_emp(nave.jogador_id)
+
+            nave.update(dt)
+
+            if entrada.shoot:
+                self.tentar_atirar(nave.jogador_id)
 
         for j in range(self.num_jogadores):
             if self.cooldown_emp[j] > 0:
                 self.cooldown_emp[j] = max(0.0, self.cooldown_emp[j] - dt)
+            if self.cooldown_fenda[j] > 0:
+                self.cooldown_fenda[j] = max(0.0, self.cooldown_fenda[j] - dt)
 
         for pulso in self.pulsos_emp:
             dono = self.naves[pulso.dono_id]
             if dono.ativa:
                 pulso.ancorar(dono.pos)
+
         self.pulsos_emp.update(dt)
         self._emp_contra_ast()
         self._emp_contra_naves()
-        self.rastros_grav.update(dt)
-        self._aplicar_rastros_gravitacionais(dt)
+        self._emp_contra_ovni()
+
+        self.fendas_grav.update(dt)
+        self._aplicar_fendas_gravitacionais(dt)
 
         for grupo in self.balas:
             grupo.update(dt)
@@ -270,15 +290,14 @@ class Mundo:
         self.ovnis.update(dt)
         self.carcacas.update(dt)
 
-        # OVNI mira na nave viva mais próxima
         for ovni in self.ovnis:
             vivas_agora = self.naves_vivas()
             if not vivas_agora:
                 break
             alvo = min(vivas_agora, key=lambda n: (n.pos - ovni.pos).length())
-            b = ovni.atirar_em(alvo.pos)
-            if b:
-                self.balas_ovni.add(b)
+            bala = ovni.atirar_em(alvo.pos)
+            if bala:
+                self.balas_ovni.add(bala)
 
         self.timer_ovni -= dt
         if self.timer_ovni <= 0 and not self.ovnis:
@@ -296,12 +315,11 @@ class Mundo:
                 self.cool_onda = C.ATRASO_ONDA
 
     # --- colisões ---
-
     def _resolver_colisoes(self):
         # Balas dos jogadores vs asteroides
         for i, grupo in enumerate(self.balas):
             if not self.naves[i].ativa:
-                continue  # ignora balas de jogadores eliminados
+                continue
             nave = self.naves[i]
             for ast in list(self.asteroides):
                 for bala in list(grupo):
@@ -313,7 +331,7 @@ class Mundo:
         # Balas dos jogadores vs OVNI
         for i, grupo in enumerate(self.balas):
             if not self.naves[i].ativa:
-                continue  # ignora balas de jogadores eliminados
+                continue
             nave = self.naves[i]
             for ovni in list(self.ovnis):
                 for bala in list(grupo):
@@ -324,21 +342,21 @@ class Mundo:
                         bala.kill()
                         break
 
-        # Fogo amigo — balas de um jogador vs naves inimigas (modos competitivos)
+        # Balas de um jogador vs naves inimigas
         for i, grupo in enumerate(self.balas):
             if not self.naves[i].ativa:
-                continue  # ignora balas de jogadores eliminados
+                continue
             for nave_alvo in list(self.naves_vivas()):
                 if nave_alvo.jogador_id == i:
                     continue
                 if self._sao_aliados(i, nave_alvo.jogador_id):
-                    continue  # aliados não se machucam
+                    continue
                 if nave_alvo.invuln > 0:
                     continue
                 for bala in list(grupo):
                     if (nave_alvo.pos - bala.pos).length() < nave_alvo.r + bala.r:
                         bala.kill()
-                        self.naves[i].pontos += 1000  # bônus por acertar inimigo
+                        self.naves[i].pontos += 1000
                         self._nave_morreu(nave_alvo)
                         break
 
@@ -371,34 +389,34 @@ class Mundo:
                     break
 
     def _dividir_asteroide(self, ast: Asteroide, nave: Nave):
-        nave.pontos += C.TAMANHOS_AST[ast.tamanho]["pontos"]
+        pontos_base = C.TAMANHOS_AST[ast.tamanho]["pontos"]
+        nave.pontos += pontos_base
+
         pos = Vec(ast.pos)
         fragmentos = C.TAMANHOS_AST[ast.tamanho]["divide"]
         ast.kill()
-        for t in fragmentos:
+
+        for tamanho in fragmentos:
             vel = vec_aleatorio() * uniform(C.VEL_AST_MIN, C.VEL_AST_MAX) * 1.2
-            self._criar_asteroide(pos, vel, t)
+            self._criar_asteroide(pos, vel, tamanho)
 
     def _nave_morreu(self, nave: Nave):
         nave.vidas -= 1
+
         if nave.vidas <= 0:
             nave.ativa = False
-            # Carcaça só aparece nos modos com resgate
             if self.modo in (Modo.COOPERATIVO, Modo.EQUIPES):
-                c = Carcaca(Vec(nave.pos), nave.angulo, nave.jogador_id)
-                self.carcacas.add(c)
-                self.tempos_resgate[id(c)] = {}
+                carcaca = Carcaca(Vec(nave.pos), nave.angulo, nave.jogador_id)
+                self.carcacas.add(carcaca)
+                self.tempos_resgate[id(carcaca)] = {}
         else:
-            # Respawn na posição inicial com invulnerabilidade
             nave.pos = Vec(*C.POSICOES_SPAWN[nave.jogador_id])
             nave.vel = Vec(0, 0)
             nave.angulo = -90.0
             nave.invuln = C.TEMPO_SEGURO
 
     # --- mecânica de resgate ---
-
     def _atualizar_resgates(self, dt: float):
-        # Remove entradas órfãs de carcaças que expiraram por TTL
         ids_ativos = {id(c) for c in self.carcacas}
         for cid in list(self.tempos_resgate):
             if cid not in ids_ativos:
@@ -412,7 +430,6 @@ class Mundo:
             for nave in self.naves_vivas():
                 if nave.jogador_id == carcaca.jogador_id:
                     continue
-                # Inimigos não podem resgatar
                 if not self._sao_aliados(nave.jogador_id, carcaca.jogador_id):
                     continue
 
@@ -421,14 +438,12 @@ class Mundo:
                     atual = self.tempos_resgate[cid].get(nave.jogador_id, 0.0)
                     self.tempos_resgate[cid][nave.jogador_id] = atual + dt
                 else:
-                    # Reseta se saiu do alcance
                     self.tempos_resgate[cid][nave.jogador_id] = 0.0
 
                 if self.tempos_resgate[cid].get(nave.jogador_id, 0.0) >= C.DURACAO_RESGATE:
                     self._executar_resgate(carcaca, nave)
                     break
 
-            # Atualiza barra visual de progresso
             if cid in self.tempos_resgate and self.tempos_resgate[cid]:
                 maximo = max(self.tempos_resgate[cid].values())
                 carcaca.progresso = min(1.0, maximo / C.DURACAO_RESGATE)
@@ -446,29 +461,23 @@ class Mundo:
         carcaca.kill()
 
     # --- condição de vitória por modo ---
-
     def _verificar_condicao_vitoria(self):
         if self.fim_de_jogo:
             return
+
         vivas = self.naves_vivas()
 
         if self.modo in (Modo.SOLO, Modo.COOPERATIVO):
-            # Fim quando não há mais nenhuma nave viva
             if not vivas:
                 self.msg_vitoria = ""
                 self.fim_de_jogo = True
 
         elif self.modo in (Modo.DUELO, Modo.TODOS_CONTRA_TODOS):
-            # Fim quando restar no máximo 1 jogador
             if len(vivas) <= 1:
-                if len(vivas) == 1:
-                    self.msg_vitoria = f"JOGADOR {vivas[0].jogador_id + 1} VENCEU!"
-                else:
-                    self.msg_vitoria = "EMPATE!"
+                self.msg_vitoria = f"JOGADOR {vivas[0].jogador_id + 1} VENCEU!" if vivas else "EMPATE!"
                 self.fim_de_jogo = True
 
         elif self.modo == Modo.EQUIPES:
-            # Fim quando restar no máximo 1 equipe viva
             equipes_ativas = {(n.jogador_id // 2) for n in vivas}
             if len(equipes_ativas) <= 1:
                 if len(equipes_ativas) == 1:
@@ -479,14 +488,13 @@ class Mundo:
                 self.fim_de_jogo = True
 
     # --- desenho ---
-
     def draw(self, surf: pg.Surface, font_pequena: pg.font.Font):
         for ast in self.asteroides:
             ast.draw(surf)
         for ovni in self.ovnis:
             ovni.draw(surf)
-        for rastro in self.rastros_grav:
-            rastro.draw(surf)
+        for fenda in self.fendas_grav:
+            fenda.draw(surf)
         for bala in self.balas_ovni:
             bala.draw(surf)
         for i, grupo in enumerate(self.balas):
