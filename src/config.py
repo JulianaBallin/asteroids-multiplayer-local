@@ -27,10 +27,10 @@ POSICOES_SPAWN = [
 # Controles por jogador
 # Ordem: esquerda, direita, cima, fogo, hiper (Pulsar EMP), fenda (dash gravitacional)
 CONTROLES = [
-    {'esq': pg.K_a, 'dir': pg.K_d, 'cima': pg.K_w, 'fogo': pg.K_LSHIFT, 'hiper': pg.K_q, 'fenda': pg.K_e},
-    {'esq': pg.K_LEFT, 'dir': pg.K_RIGHT, 'cima': pg.K_UP, 'fogo': pg.K_RSHIFT, 'hiper': pg.K_p, 'fenda': pg.K_o},
     {'esq': pg.K_j, 'dir': pg.K_l, 'cima': pg.K_i, 'fogo': pg.K_h, 'hiper': pg.K_y, 'fenda': pg.K_u},
     {'esq': pg.K_KP4, 'dir': pg.K_KP6, 'cima': pg.K_KP8, 'fogo': pg.K_KP0, 'hiper': pg.K_KP_ENTER, 'fenda': pg.K_KP9},
+    {'esq': pg.K_a, 'dir': pg.K_d, 'cima': pg.K_w, 'fogo': pg.K_LSHIFT, 'hiper': pg.K_q, 'fenda': pg.K_e},
+    {'esq': pg.K_LEFT, 'dir': pg.K_RIGHT, 'cima': pg.K_UP, 'fogo': pg.K_RSHIFT, 'hiper': pg.K_p, 'fenda': pg.K_o},
 ]
 
 # Nave
