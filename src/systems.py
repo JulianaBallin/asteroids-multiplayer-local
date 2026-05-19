@@ -34,6 +34,7 @@ class Mundo:
         self.cool_onda = C.ATRASO_ONDA
         self.timer_ovni = C.INTERVALO_OVNI
         self.fim_de_jogo = False
+        self.tempo_restante: float = C.TEMPO_PARTIDA
 
     # --- consultas de estado ---
     def naves_vivas(self) -> list[Nave]:
@@ -130,9 +131,7 @@ class Mundo:
                     continue
 
                 pulso.naves_na_frente.add(jid)
-                if self._sao_aliados(pulso.dono_id, jid):
-                    nave.invuln = max(nave.invuln, C.EMP_INVULN_ALIADO)
-                else:
+                if not self._sao_aliados(pulso.dono_id, jid):
                     nave.emp_jam = max(nave.emp_jam, C.EMP_JAM_SEG)
 
     def _emp_contra_ovni(self):
@@ -308,13 +307,47 @@ class Mundo:
         self._atualizar_resgates(dt)
         self._verificar_condicao_vitoria()
 
+        if self.tempo_restante > 0:
+            self.tempo_restante = max(0.0, self.tempo_restante - dt)
+            if self.tempo_restante == 0.0:
+                self._encerrar_por_tempo()
+
         if not self.asteroides:
             self.cool_onda -= dt
             if self.cool_onda <= 0:
                 self.iniciar_onda()
                 self.cool_onda = C.ATRASO_ONDA
 
-    # --- colisões ---
+    def _encerrar_por_tempo(self):
+        if self.fim_de_jogo:
+            return
+        vivas = self.naves_vivas()
+        if self.modo in (Modo.SOLO, Modo.COOPERATIVO):
+            self.msg_vitoria = "TEMPO ESGOTADO"
+            self.fim_de_jogo = True
+        elif self.modo in (Modo.DUELO, Modo.TODOS_CONTRA_TODOS):
+            if not vivas:
+                self.msg_vitoria = "EMPATE! TEMPO ESGOTADO"
+            else:
+                max_pts = max(n.pontos for n in vivas)
+                vencedores = [n for n in vivas if n.pontos == max_pts]
+                if len(vencedores) == 1:
+                    self.msg_vitoria = f"J{vencedores[0].jogador_id + 1} VENCEU! TEMPO ESGOTADO"
+                else:
+                    self.msg_vitoria = "EMPATE! TEMPO ESGOTADO"
+            self.fim_de_jogo = True
+        elif self.modo == Modo.EQUIPES:
+            pts_a = sum(n.pontos for n in vivas if n.jogador_id // 2 == 0)
+            pts_b = sum(n.pontos for n in vivas if n.jogador_id // 2 == 1)
+            if pts_a > pts_b:
+                self.msg_vitoria = "EQUIPE A VENCEU! TEMPO ESGOTADO"
+            elif pts_b > pts_a:
+                self.msg_vitoria = "EQUIPE B VENCEU! TEMPO ESGOTADO"
+            else:
+                self.msg_vitoria = "EMPATE! TEMPO ESGOTADO"
+            self.fim_de_jogo = True
+
+    # --- colisoes ---
     def _resolver_colisoes(self):
         # Balas dos jogadores vs asteroides
         for i, grupo in enumerate(self.balas):
