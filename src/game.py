@@ -28,10 +28,10 @@ class Jogo:
         pg.display.set_caption("Asteroids Multiplayer Local")
         self.relogio = pg.time.Clock()
 
-        self.font = pg.font.SysFont("consolas", 18)
-        self.font_grande = pg.font.SysFont("consolas", 46)
-        self.font_media = pg.font.SysFont("consolas", 22)
-        self.font_pequena = pg.font.SysFont("consolas", 11)
+        self.font = pg.font.SysFont("consolas", 22)
+        self.font_grande = pg.font.SysFont("consolas", 60)
+        self.font_media = pg.font.SysFont("consolas", 28)
+        self.font_pequena = pg.font.SysFont("consolas", 15)
 
         self.cena = "menu"
         self.mundo: Mundo | None = None
@@ -179,71 +179,82 @@ class Jogo:
         cx = C.LARGURA // 2
         nome, _, min_j, max_j, desc = self._modo_atual()
 
-        txt(self.tela, self.font_grande, "ASTEROIDS", cx - 145, 88)
-        txt(self.tela, self.font_media, "MULTIPLAYER LOCAL", cx - 105, 146, C.CINZA_CLARO)
-        pg.draw.line(self.tela, C.CINZA, (cx - 290, 176), (cx + 290, 176))
+        titulo = "ASTEROIDS"
+        txt(self.tela, self.font_grande, titulo, cx - self.font_grande.size(titulo)[0] // 2, 90)
+        sub = "MULTIPLAYER LOCAL"
+        txt(self.tela, self.font_media, sub, cx - self.font_media.size(sub)[0] // 2, 164, C.CINZA_CLARO)
+        pg.draw.line(self.tela, C.CINZA, (cx - 360, 206), (cx + 360, 206))
 
-        txt(self.tela, self.font_pequena, "< MODO >", cx - 30, 184, C.CINZA_CLARO)
-        nome_w = self.font_media.size(nome)[0]
+        modo_label = "< MODO >"
+        txt(self.tela, self.font_pequena, modo_label, cx - self.font_pequena.size(modo_label)[0] // 2, 218, C.CINZA_CLARO)
         cor_modo = C.CORES_JOGADORES[self.modo_idx % 4]
-        txt(self.tela, self.font_media, nome, cx - nome_w // 2, 200, cor_modo)
-        desc_w = self.font_pequena.size(desc)[0]
-        txt(self.tela, self.font_pequena, desc, cx - desc_w // 2, 228, C.CINZA_CLARO)
+        txt(self.tela, self.font_media, nome, cx - self.font_media.size(nome)[0] // 2, 236, cor_modo)
+        txt(self.tela, self.font_pequena, desc, cx - self.font_pequena.size(desc)[0] // 2, 274, C.CINZA_CLARO)
 
         if min_j != max_j:
-            txt(self.tela, self.font_pequena, "Jogadores:", cx - 140, 256, C.CINZA_CLARO)
+            jog_label = "Jogadores:"
+            txt(self.tela, self.font_pequena, jog_label, cx - self.font_pequena.size(jog_label)[0] // 2 - 80, 310, C.CINZA_CLARO)
             for n in range(min_j, max_j + 1):
                 cor = C.BRANCO if n == self.num_jogadores else C.CINZA
-                offset = (n - min_j) * 55
-                txt(self.tela, self.font_media, f"[{n}]", cx - 30 + offset, 251, cor)
-            txt(self.tela, self.font_pequena, "Pressione 2, 3 ou 4 para selecionar", cx - 155, 279, C.CINZA)
+                offset = (n - min_j) * 66
+                txt(self.tela, self.font_media, f"[{n}]", cx - 40 + offset, 305, cor)
+            sel_txt = "Pressione 2, 3 ou 4 para selecionar"
+            txt(self.tela, self.font_pequena, sel_txt, cx - self.font_pequena.size(sel_txt)[0] // 2, 344, C.CINZA)
         else:
-            txt(self.tela, self.font_pequena, f"Jogadores: {min_j}", cx - 55, 256, C.CINZA_CLARO)
+            jog_txt = f"Jogadores: {min_j}"
+            txt(self.tela, self.font_pequena, jog_txt, cx - self.font_pequena.size(jog_txt)[0] // 2, 310, C.CINZA_CLARO)
 
-        pg.draw.line(self.tela, C.CINZA, (cx - 290, 298), (cx + 290, 298))
+        pg.draw.line(self.tela, C.CINZA, (cx - 360, 368), (cx + 360, 368))
 
         start_txt = "ENTER ou ESPACO para iniciar"
-        txt(self.tela, self.font, start_txt, cx - self.font.size(start_txt)[0] // 2, 308)
-        txt(self.tela, self.font_pequena, "Setas ou direcional do controle mudam modo/jogadores", cx - 190, 335, C.CINZA_CLARO)
-        txt(self.tela, self.font_pequena, "ESC ou BACK sai / volta ao menu", cx - 118, 354, C.CINZA_CLARO)
+        txt(self.tela, self.font, start_txt, cx - self.font.size(start_txt)[0] // 2, 384)
+        setas_txt = "Setas ou direcional do controle mudam modo e jogadores"
+        txt(self.tela, self.font_pequena, setas_txt, cx - self.font_pequena.size(setas_txt)[0] // 2, 416, C.CINZA_CLARO)
+        esc_txt = "ESC ou BACK sai e volta ao menu"
+        txt(self.tela, self.font_pequena, esc_txt, cx - self.font_pequena.size(esc_txt)[0] // 2, 438, C.CINZA_CLARO)
 
         self._desenhar_controles(cx)
         self._desenhar_mecanicas(cx)
         self._desenhar_status_controles(cx)
 
     def _desenhar_controles(self, cx: int):
-        y = 392
-        txt(self.tela, self.font_pequena, "CONTROLES", cx - 38, y, C.CINZA_CLARO)
+        y = 468
+        header = "CONTROLES"
+        txt(self.tela, self.font_pequena, header, cx - self.font_pequena.size(header)[0] // 2, y, C.CINZA_CLARO)
         linhas = [
             "J1: J/L giram | I acelera | H atira | Y EMP | U Fenda",
             "J2: Num4/Num6 giram | Num8 acelera | Num0 atira | Enter EMP | Num9 Fenda",
             "J3: A/D giram | W acelera | LSHIFT atira | Q EMP | E Fenda",
-            "J4: ←/→ giram | ↑ acelera | RSHIFT atira | P EMP | O Fenda",
+            "J4: seta esq/dir giram | seta cima acelera | RSHIFT atira | P EMP | O Fenda",
         ]
         for i, linha in enumerate(linhas):
-            txt(self.tela, self.font_pequena, linha, cx - 250, y + 24 + i * 18, C.CINZA_CLARO)
+            txt(self.tela, self.font_pequena, linha, cx - self.font_pequena.size(linha)[0] // 2, y + 22 + i * 20, C.CINZA_CLARO)
 
     def _desenhar_mecanicas(self, cx: int):
-        y = 505
-        txt(self.tela, self.font_pequena, "MECANICAS", cx - 42, y, C.CINZA_CLARO)
+        y = 572
+        header = "MECANICAS"
+        txt(self.tela, self.font_pequena, header, cx - self.font_pequena.size(header)[0] // 2, y, C.CINZA_CLARO)
         linhas = [
-            "PULSAR EMP: empurra asteroides, protege aliados e trava inimigos",
+            "PULSAR EMP: empurra asteroides, trava inimigos e neutraliza OVNIs",
             "RESGATE: em coop/equipes, fique perto da carcaca aliada para reviver",
-            "FENDA GRAVITACIONAL: use o botão próprio para dar dash e rasgar o espaco",
+            "FENDA GRAVITACIONAL: dash rapido que rasga o espaco e destroe projeteis",
         ]
         for i, linha in enumerate(linhas):
-            txt(self.tela, self.font_pequena, linha, cx - 285, y + 24 + i * 18, C.CINZA_CLARO)
+            txt(self.tela, self.font_pequena, linha, cx - self.font_pequena.size(linha)[0] // 2, y + 22 + i * 20, C.CINZA_CLARO)
 
     def _desenhar_status_controles(self, cx: int):
         nomes = self.input_manager.joysticks_conectados()
-        y = 628
+        y = 658
         if nomes:
-            txt(self.tela, self.font_pequena, "Controles detectados:", cx - 95, y, C.CINZA_CLARO)
+            header = "Controles detectados:"
+            txt(self.tela, self.font_pequena, header, cx - self.font_pequena.size(header)[0] // 2, y, C.CINZA_CLARO)
             for i, nome in enumerate(nomes[:C.MAX_JOGADORES]):
                 cor = C.CORES_JOGADORES[i]
-                txt(self.tela, self.font_pequena, f"J{i + 1}: {nome}", cx - 230, y + 18 + i * 14, cor)
+                joy_txt = f"J{i + 1}: {nome}"
+                txt(self.tela, self.font_pequena, joy_txt, cx - self.font_pequena.size(joy_txt)[0] // 2, y + 20 + i * 18, cor)
         else:
-            txt(self.tela, self.font_pequena, "Nenhum controle detectado — usando teclado", cx - 150, y, C.CINZA_CLARO)
+            aviso = "Nenhum controle detectado, usando teclado"
+            txt(self.tela, self.font_pequena, aviso, cx - self.font_pequena.size(aviso)[0] // 2, y, C.CINZA_CLARO)
 
     # --- HUD e placar ---
     def _desenhar_hud(self):
@@ -261,27 +272,37 @@ class Jogo:
                 f"pts: {nave.pontos} | EMP: {cd_emp:.0f}s | Fenda: {cd_fenda:.0f}s"
             )
             txt(self.tela, self.font_pequena, linha, 12, y, cor)
-            y += 16
+            y += 20
 
-        txt(self.tela, self.font_pequena, f"Onda: {self.mundo.onda}", C.LARGURA - 100, 12, C.CINZA_CLARO)
+        onda_txt = f"Onda: {self.mundo.onda}"
+        txt(self.tela, self.font_pequena, onda_txt, C.LARGURA - self.font_pequena.size(onda_txt)[0] - 12, 10, C.CINZA_CLARO)
+
+        minutos = int(self.mundo.tempo_restante // 60)
+        segundos = int(self.mundo.tempo_restante % 60)
+        tempo_str = f"{minutos:02d}:{segundos:02d}"
+        cor_tempo = (255, 80, 80) if self.mundo.tempo_restante <= 30 else C.BRANCO
+        txt(self.tela, self.font_media, tempo_str, C.LARGURA // 2 - self.font_media.size(tempo_str)[0] // 2, 8, cor_tempo)
 
     def _desenhar_placar(self):
         if self.mundo is None:
             return
 
         cx = C.LARGURA // 2
-        txt(self.tela, self.font_grande, "FIM DE JOGO", cx - 145, 120)
+        fim_txt = "FIM DE JOGO"
+        txt(self.tela, self.font_grande, fim_txt, cx - self.font_grande.size(fim_txt)[0] // 2, 130)
 
         if self.mundo.msg_vitoria:
             w = self.font_media.size(self.mundo.msg_vitoria)[0]
-            txt(self.tela, self.font_media, self.mundo.msg_vitoria, cx - w // 2, 180, C.CINZA_CLARO)
+            txt(self.tela, self.font_media, self.mundo.msg_vitoria, cx - w // 2, 210, C.CINZA_CLARO)
 
         ordenados = sorted(self.mundo.naves, key=lambda n: n.pontos, reverse=True)
-        y = 250
+        y = 280
         for nave in ordenados:
             linha = f"J{nave.jogador_id + 1}: {nave.pontos} pontos"
-            txt(self.tela, self.font_media, linha, cx - 105, y, nave.cor)
-            y += 34
+            txt(self.tela, self.font_media, linha, cx - self.font_media.size(linha)[0] // 2, y, nave.cor)
+            y += 42
 
-        txt(self.tela, self.font, "ENTER/START para jogar novamente", cx - 165, 500)
-        txt(self.tela, self.font, "ESC/BACK para voltar ao menu", cx - 150, 530, C.CINZA_CLARO)
+        novo_txt = "ENTER ou START para jogar novamente"
+        txt(self.tela, self.font, novo_txt, cx - self.font.size(novo_txt)[0] // 2, 560)
+        menu_txt = "ESC ou BACK para voltar ao menu"
+        txt(self.tela, self.font, menu_txt, cx - self.font.size(menu_txt)[0] // 2, 598, C.CINZA_CLARO)
