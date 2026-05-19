@@ -215,10 +215,10 @@ class Jogo:
         y = 392
         txt(self.tela, self.font_pequena, "CONTROLES", cx - 38, y, C.CINZA_CLARO)
         linhas = [
-            "J1: A/D giram | W acelera | LSHIFT atira | Q EMP | E Fenda",
-            "J2: ←/→ giram | ↑ acelera | RSHIFT atira | P EMP | O Fenda",
-            "J3: J/L giram | I acelera | H atira | Y EMP | U Fenda",
-            "J4: Num4/Num6 giram | Num8 acelera | Num0 atira | Enter EMP | Num9 Fenda",
+            "J1: J/L giram | I acelera | H atira | Y EMP | U Fenda",
+            "J2: Num4/Num6 giram | Num8 acelera | Num0 atira | Enter EMP | Num9 Fenda",
+            "J3: A/D giram | W acelera | LSHIFT atira | Q EMP | E Fenda",
+            "J4: ←/→ giram | ↑ acelera | RSHIFT atira | P EMP | O Fenda",
         ]
         for i, linha in enumerate(linhas):
             txt(self.tela, self.font_pequena, linha, cx - 250, y + 24 + i * 18, C.CINZA_CLARO)
