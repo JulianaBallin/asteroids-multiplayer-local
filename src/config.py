@@ -1,8 +1,8 @@
 import pygame as pg
 
 # Tela
-LARGURA = 1280
-ALTURA = 720
+LARGURA = 1600
+ALTURA = 900
 FPS = 60
 
 # Máximo de jogadores simultâneos
@@ -18,10 +18,10 @@ CORES_JOGADORES = [
 
 # Posições de spawn iniciais por jogador
 POSICOES_SPAWN = [
-    (320, 384),   # J1: esquerda
-    (960, 384),   # J2: direita
-    (640, 230),   # J3: topo
-    (640, 560),   # J4: baixo
+    (400, 450),   # J1: esquerda
+    (1200, 450),  # J2: direita
+    (800, 225),   # J3: topo
+    (800, 675),   # J4: baixo
 ]
 
 # Controles por jogador
