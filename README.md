@@ -117,10 +117,10 @@ Asteroides atingidos pelo pulso recebem um impulso de repulsão, alterando sua t
 
 | Jogador | Esquerda | Direita | Acelerar | Fogo | Pulsar EMP | Fenda Gravitacional |
 |---|---|---|---|---|---|---|
-| **J1** | `A` | `D` | `W` | `LSHIFT` | `Q` | `E` |
-| **J2** | `←` | `→` | `↑` | `RSHIFT` | `P` | `O` |
-| **J3** | `J` | `L` | `I` | `H` | `Y` | `U` |
-| **J4** | `Num4` | `Num6` | `Num8` | `Num0` | `NumEnter` | `Num9` |
+| **J1** | `J` | `L` | `I` | `H` | `Y` | `U` |
+| **J2** | `Num4` | `Num6` | `Num8` | `Num0` | `NumEnter` | `Num9` |
+| **J3** | `A` | `D` | `W` | `LSHIFT` | `Q` | `E` |
+| **J4** | `←` | `→` | `↑` | `RSHIFT` | `P` | `O` |
 
 > **Pulsar EMP:** habilidade em área ao redor da nave. Empurra asteroides, concede invulnerabilidade temporária a aliados em modos cooperativos e reduz a rotação de inimigos em modos competitivos.
 
