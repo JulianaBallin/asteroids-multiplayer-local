@@ -103,6 +103,9 @@ class Jogo:
             pg.display.flip()
 
     def _processar_evento(self, e: pg.event.Event):
+        if e.type in (pg.JOYDEVICEADDED, pg.JOYDEVICEREMOVED):
+            self.input_manager.marcar_scan_joystick()
+            return
         if e.type not in (pg.KEYDOWN, pg.JOYBUTTONDOWN, pg.JOYHATMOTION):
             return
 

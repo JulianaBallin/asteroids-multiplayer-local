@@ -322,12 +322,17 @@ class InputManager:
             or "dual sense" in n
             or "sixaxis" in n
             or "wireless controller" in n
+            or "ps4" in n
+            or "ps 4" in n
+            or "ps5" in n
+            or "ps 5" in n
+            or "sony interactive" in n
         ):
             return {
                 "axis_left_x": 0,
                 "axis_left_y": 1,
                 "btn_shoot": 0,     # Cross/X
-                "btn_shoot_alt": 7, # Options como fallback de seleção
+                "btn_shoot_alt": 7, # Options como fallback de selecao
                 "btn_shoot_more": (1, 2, 3),
                 "btn_emp": 4,       # L1
                 "btn_emp_more": (6,),
@@ -343,8 +348,11 @@ class InputManager:
             "axis_left_y": C.JOY_AXIS_LEFT_Y,
             "btn_shoot": C.JOY_BTN_SHOOT,
             "btn_shoot_alt": C.JOY_BTN_SHOOT_ALT,
+            "btn_shoot_more": (1, 2, 3),
             "btn_emp": C.JOY_BTN_EMP,
+            "btn_emp_more": (6, 10),
             "btn_fenda": C.JOY_BTN_FENDA,
+            "btn_fenda_more": (11,),
             "btn_back": C.JOY_BTN_BACK,
             "btn_start": C.JOY_BTN_START,
         }
